@@ -42,22 +42,28 @@ button.go:disabled{opacity:.5}
   <p class="mu" id="rnd"></p>
   <p class="mu" id="closed" style="display:none;color:#dc2626">ขณะนี้ปิดรับแบบสอบถาม</p>
   <label class="f" for="sid">รหัสนักเรียน</label>
-  <input type="text" id="sid" inputmode="numeric" placeholder="เช่น 12345" maxlength="20" autocomplete="off">
-  <div class="mu" id="hint" style="margin-top:6px"></div>
-  <label class="f" for="plan">แผนการเรียน</label>
-  <select id="plan"><option value="">— เลือกแผนการเรียน —</option></select>
-  <label class="f">ผู้ตอบแบบสอบถาม</label>
-  <div class="roles">
-    <div class="role" data-r="student">🎒 นักเรียน</div>
-    <div class="role" data-r="parent">👨‍👩‍👧 ผู้ปกครอง</div>
+  <div style="display:flex;gap:8px">
+    <input type="text" id="sid" inputmode="numeric" placeholder="เช่น 12345" maxlength="20" autocomplete="off" style="flex:1">
+    <button class="go" id="search" style="width:auto;margin:0;padding:0 22px" disabled>🔍 ค้นหา</button>
   </div>
-  <div id="cons" class="hide" style="margin-top:16px;border:1px solid var(--bd);border-radius:10px;padding:12px">
-    <b>🔒 ประกาศความเป็นส่วนตัว</b>
-    <div class="mu" id="ctext" style="white-space:pre-wrap;margin:6px 0"></div>
-    <label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="cchk" style="margin-top:4px"><span>ข้าพเจ้าได้อ่านและยินยอมให้เก็บและใช้ข้อมูลตามประกาศนี้</span></label>
+  <div id="found" class="hide">
+    <div id="hint" style="margin:12px 0 0;color:#16a34a;font-weight:600"></div>
+    <div id="planbox" class="hide">
+      <label class="f" for="plan">แผนการเรียน</label>
+      <select id="plan"><option value="">— เลือกแผนการเรียน —</option></select>
+    </div>
+    <div id="cons" class="hide" style="margin-top:16px;border:1px solid var(--bd);border-radius:10px;padding:12px">
+      <b>🔒 ประกาศความเป็นส่วนตัว</b>
+      <div class="mu" id="ctext" style="white-space:pre-wrap;margin:6px 0"></div>
+      <label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="cchk" style="margin-top:4px"><span>ข้าพเจ้าได้อ่านและยินยอมให้เก็บและใช้ข้อมูลตามประกาศนี้</span></label>
+    </div>
+    <label class="f">เลือกทำแบบสอบถามในฐานะ</label>
+    <div class="roles">
+      <div class="role" data-r="student">🎒 นักเรียน</div>
+      <div class="role" data-r="parent">👨‍👩‍👧 ผู้ปกครอง</div>
+    </div>
   </div>
   <div class="err" id="e1"></div>
-  <button class="go" id="start" disabled>เริ่มทำแบบสอบถาม</button>
 </div>
 
 <div class="card hide" id="s2">
@@ -83,19 +89,30 @@ const $ = id => document.getElementById(id);
 let CFG = null, role = "", sid = "", planId = "", list = [], REQ = false, FOUND = false, TSID = null;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const ID_OK = /^[A-Za-z0-9\-]{3,20}$/;
-async function lookup() {
-  const s = $("sid").value.trim(); FOUND = false; $("plan").disabled = false; $("hint").textContent = "";
-  if (!ID_OK.test(s)) return;
+async function search() {
+  $("e1").textContent = ""; $("found").classList.add("hide");
+  sid = $("sid").value.trim();
+  if (!ID_OK.test(sid)) return $("e1").textContent = "กรุณากรอกรหัสนักเรียนให้ถูกต้อง";
+  $("search").disabled = true;
   try {
-    const j = await (await fetch("/api/lookup?id=" + encodeURIComponent(s))).json();
+    const j = await (await fetch("/api/lookup?id=" + encodeURIComponent(sid))).json();
     REQ = j.required; FOUND = j.found;
-    if (j.found) {
-      $("hint").textContent = "✓ พบข้อมูล: " + j.name + (j.class ? " ห้อง " + j.class : "");
-      if (j.plan_id) { $("plan").value = j.plan_id; if ($("plan").value === String(j.plan_id)) $("plan").disabled = true; }
-    } else if (j.required) $("hint").textContent = "⚠️ ไม่พบรหัสนี้ในรายชื่อนักเรียน";
-  } catch {}
+    if (!j.found && j.required) return $("e1").textContent = "ไม่พบรหัสนี้ในรายชื่อนักเรียน กรุณาตรวจสอบรหัสอีกครั้ง";
+    let lock = !!(j.found && j.plan_id);
+    $("plan").value = lock ? j.plan_id : "";
+    if (lock && $("plan").value !== String(j.plan_id)) lock = false;
+    $("planbox").classList.toggle("hide", lock);
+    $("hint").textContent = j.found
+      ? "✓ พบข้อมูล: " + j.name + (j.class ? " ห้อง " + j.class : "") + (lock ? " · แผน " + $("plan").selectedOptions[0].text : "")
+      : "ไม่พบรหัสนี้ในรายชื่อ — กรุณาเลือกแผนการเรียนของท่านเอง";
+    $("hint").style.color = j.found ? "#16a34a" : "var(--mu)";
+    $("found").classList.remove("hide");
+  } catch { $("e1").textContent = "เชื่อมต่อไม่สำเร็จ กรุณาลองใหม่"; }
+  finally { $("search").disabled = !(CFG && CFG.open); }
 }
-$("sid").onblur = lookup;
+$("search").onclick = search;
+$("sid").onkeydown = e => { if (e.key === "Enter") search(); };
+$("sid").oninput = () => { $("found").classList.add("hide"); $("e1").textContent = ""; };
 
 fetch("/api/config").then(r => r.json()).then(c => {
   CFG = c;
@@ -105,21 +122,14 @@ fetch("/api/config").then(r => r.json()).then(c => {
   if (c.turnstile) { const s = document.createElement("script"); s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"; s.async = true; document.head.appendChild(s); }
   document.title = c.title;
   c.plans.forEach(p => $("plan").add(new Option(p.name, p.id)));
-  if (c.open) $("start").disabled = false; else $("closed").style.display = "block";
+  if (c.open) $("search").disabled = false; else $("closed").style.display = "block";
 }).catch(() => $("e1").textContent = "โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า");
 
-document.querySelectorAll(".role").forEach(el => el.onclick = () => {
-  document.querySelectorAll(".role").forEach(x => x.classList.remove("on"));
-  el.classList.add("on"); role = el.dataset.r;
-});
+document.querySelectorAll(".role").forEach(el => el.onclick = () => { role = el.dataset.r; begin(); });
 
-$("start").onclick = async () => {
-  await lookup();
+function begin() {
   sid = $("sid").value.trim(); planId = $("plan").value;
-  if (REQ && !FOUND && ID_OK.test(sid)) return $("e1").textContent = "ไม่พบรหัสนี้ในรายชื่อนักเรียน กรุณาตรวจสอบรหัสอีกครั้ง";
-  if (!/^[A-Za-z0-9\-]{3,20}$/.test(sid)) return $("e1").textContent = "กรุณากรอกรหัสนักเรียนให้ถูกต้อง";
   if (!planId) return $("e1").textContent = "กรุณาเลือกแผนการเรียน";
-  if (!role) return $("e1").textContent = "กรุณาเลือกนักเรียนหรือผู้ปกครอง";
   if (CFG.consent_required && !$("cchk").checked) return $("e1").textContent = "กรุณากดยินยอมประกาศความเป็นส่วนตัว";
   list = CFG.questions.filter(q => (q.plan_id === null || String(q.plan_id) === planId) && (q.role === "both" || q.role === role));
   if (!list.length) return $("e1").textContent = "ยังไม่มีแบบสอบถามสำหรับแผนนี้";
@@ -136,7 +146,7 @@ $("start").onclick = async () => {
     <div class="legend"><span>น้อยที่สุด</span><span>มากที่สุด</span></div></div>`).join("");
   $("s1").classList.add("hide"); $("s2").classList.remove("hide"); scrollTo(0, 0);
   if (CFG.turnstile && window.turnstile && TSID === null) TSID = turnstile.render("#ts", {sitekey: CFG.turnstile});
-};
+}
 
 $("send").onclick = async () => {
   const answers = {};
