@@ -177,7 +177,7 @@ $("#lg").onclick = async () => {
   const r = await fetch("/api/admin?action=ping", {headers: {"X-Admin-Key": KEY}});
   if (r.ok) { $("#le").textContent = ""; enter(); } else $("#le").textContent = "รหัสผ่านไม่ถูกต้อง (หรือยังไม่ได้ตั้ง ADMIN_PASSWORD)";
 };
-$("#pw").onkeydown = e => e.key === "Enter" && $("#lg").click();
+$("#pw").onkeydown = e => { if (e.key === "Enter") $("#lg").click(); };
 $("#out").onclick = logout;
 if (KEY) enter();
 
