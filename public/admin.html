@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>ระบบจัดการแบบสอบถาม (Admin)</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--tx:#1f2937;--mu:#6b7280;--pr:#4f46e5;--bd:#e5e7eb;--ok:#16a34a;--bad:#dc2626}
+@media(prefers-color-scheme:dark){:root{--bg:#111827;--card:#1f2937;--tx:#f3f4f6;--mu:#9ca3af;--bd:#374151}}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Sarabun","Noto Sans Thai",system-ui,sans-serif;background:var(--bg);color:var(--tx);padding:14px}
+.wrap{max-width:1000px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:18px;margin-bottom:14px}
+h1{font-size:1.3rem;margin:0}h2{font-size:1.05rem;margin:0 0 10px}
+.mu{color:var(--mu);font-size:.85rem}
+input,select,textarea{padding:9px;border:1px solid var(--bd);border-radius:8px;font:inherit;background:transparent;color:var(--tx);max-width:100%}
+select option{color:#111}
+button{padding:9px 14px;border:0;border-radius:8px;background:var(--pr);color:#fff;font:inherit;font-weight:600;cursor:pointer}
+button.sec{background:transparent;color:var(--tx);border:1px solid var(--bd)}
+button.del{background:var(--bad)}button.sm{padding:4px 9px;font-size:.8rem}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.tabs button{background:transparent;color:var(--tx);border:1px solid var(--bd)}
+.tabs button.on{background:var(--pr);color:#fff;border-color:var(--pr)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{border:1px solid var(--bd);border-radius:10px;padding:12px}
+.stat b{display:block;font-size:1.6rem}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--bd);vertical-align:top}
+.wide{overflow-x:auto}
+.dist{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--bd);min-width:120px}
+.tag{font-size:.75rem;padding:2px 7px;border-radius:99px;border:1px solid var(--bd)}
+.cm{border-left:3px solid var(--pr);padding:4px 10px;margin:8px 0}
+.hide{display:none}.err{color:var(--bad)}
+.print-only{display:none}
+@media print{
+:root{--bg:#fff;--card:#fff;--tx:#000;--mu:#444;--bd:#ccc}
+body{padding:0}
+.bar,.tabs,#login{display:none!important}
+.print-only{display:block;margin-bottom:10px}
+.card{break-inside:avoid}
+*{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+.col{display:flex;gap:4px;align-items:end;height:80px}
+.col div{flex:1;background:var(--pr);border-radius:3px 3px 0 0;position:relative;min-height:2px}
+.col span{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:.7rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="card" id="login" style="max-width:380px;margin-top:60px">
+  <h1>🔐 เข้าสู่ระบบผู้ดูแล</h1>
+  <p class="mu">กรอกรหัสผ่านผู้ดูแล</p>
+  <div class="bar"><input type="password" id="pw" placeholder="รหัสผ่าน" style="flex:1"><button id="lg">เข้าสู่ระบบ</button></div>
+  <div class="err" id="le"></div>
+</div>
+
+<div id="app" class="hide">
+  <div class="bar" style="justify-content:space-between"><h1>⚙️ ระบบจัดการแบบสอบถาม</h1><div class="bar" style="margin:0"><span class="mu">รอบการประเมิน</span><select id="rid"></select><button class="sec" id="out">ออกจากระบบ</button></div></div>
+  <div class="tabs" id="tabs">
+    <button data-t="sum" class="on">📊 สรุปผล</button><button data-t="round">🗓️ รอบการประเมิน</button><button data-t="plan">🏫 แผนการเรียน</button>
+    <button data-t="q">📝 คำถาม</button><button data-t="stu">👩‍🎓 รายชื่อนักเรียน</button><button data-t="data">🗂️ ข้อมูลผู้ตอบ</button><button data-t="set">⚙️ ตั้งค่า</button>
+  </div>
+
+  <section id="t-sum">
+    <div id="phead" class="print-only"></div>
+    <div class="card"><div class="bar">
+      <select id="fp"></select>
+      <select id="fr"><option value="">ทุกผู้ตอบ</option><option value="student">นักเรียน</option><option value="parent">ผู้ปกครอง</option></select>
+      <select id="fc"><option value="">ทุกห้อง</option></select><button id="fgo">แสดงผล</button><button class="sec" id="fprint">🖨️ พิมพ์รายงาน / บันทึก PDF</button></div>
+      <div class="grid" id="cards"></div></div>
+    <div class="card"><h2>สรุปรายแผนการเรียน</h2><div class="wide" id="bp"></div></div>
+    <div class="card"><h2>สรุปรายด้าน</h2><div class="wide" id="bc"></div></div>
+    <div class="card"><h2>สรุปรายห้อง</h2><div class="wide" id="bk"></div></div>
+    <div class="card"><h2>แนวโน้มข้ามรอบการประเมิน</h2><div class="wide" id="tr"></div></div>
+    <div class="card"><h2>อัตราการตอบตามรายชื่อนักเรียน</h2><div class="wide" id="rt"></div></div>
+    <div class="card"><h2>ค่าเฉลี่ยรายข้อ</h2><p class="mu">แถบสี: <span style="color:#dc2626">■</span>1 <span style="color:#f97316">■</span>2 <span style="color:#eab308">■</span>3 <span style="color:#84cc16">■</span>4 <span style="color:#16a34a">■</span>5</p><div class="wide" id="bq"></div></div>
+    <div class="card"><h2>จำนวนผู้ตอบ 14 วันล่าสุด</h2><div class="col" id="dl"></div></div>
+    <div class="card"><h2>ข้อเสนอแนะ</h2><div id="cl"></div></div>
+  </section>
+
+  <section id="t-round" class="hide">
+    <div class="card"><h2>เปิดรอบการประเมินใหม่</h2>
+      <p class="mu">เช่น "ภาคเรียนที่ 1/2570" — สร้างแล้วระบบตั้งเป็นรอบปัจจุบันให้ นักเรียนและผู้ปกครองทุกคนตอบใหม่ได้ ข้อมูลรอบเก่าอยู่ครบและเทียบแนวโน้มได้ในหน้าสรุปผล</p>
+      <div class="bar"><input id="rname" placeholder="ชื่อรอบ" maxlength="60"><button id="radd">สร้างรอบใหม่</button></div><div class="err" id="re"></div></div>
+    <div class="card wide" id="rl"></div>
+  </section>
+
+  <section id="t-plan" class="hide">
+    <div class="card"><h2>เพิ่ม / แก้ไขแผนการเรียน</h2>
+      <div class="bar"><input type="hidden" id="pid"><input id="pname" placeholder="ชื่อแผนการเรียน" maxlength="60">
+      <label><input type="checkbox" id="pact" checked> เปิดใช้งาน</label><button id="psave">บันทึก</button><button class="sec" id="pclr">ล้างฟอร์ม</button></div>
+      <div class="err" id="pe"></div></div>
+    <div class="card wide" id="pl"></div>
+  </section>
+
+  <section id="t-q" class="hide">
+    <div class="card"><h2>เพิ่ม / แก้ไขคำถาม</h2>
+      <div class="bar"><input type="hidden" id="qid">
+        <select id="qplan"></select>
+        <select id="qcat"></select>
+        <select id="qrole"><option value="both">นักเรียน+ผู้ปกครอง</option><option value="student">เฉพาะนักเรียน</option><option value="parent">เฉพาะผู้ปกครอง</option></select>
+        <input id="qsort" type="number" placeholder="ลำดับ" style="width:80px"></div>
+      <div class="bar"><input id="qtext" placeholder="ข้อความคำถาม" maxlength="300" style="flex:1;min-width:240px">
+        <label><input type="checkbox" id="qact" checked> เปิดใช้งาน</label><button id="qsave">บันทึก</button><button class="sec" id="qclr">ล้างฟอร์ม</button></div>
+      <div class="err" id="qe"></div>
+      <p class="mu">แผน "ทุกแผน" = คำถามกลางที่ปรากฏในทุกแผนการเรียน · อย่าลบคำถามที่มีคนตอบแล้ว ให้ปิดใช้งานแทน เพื่อไม่ให้ผลสรุปเก่าหาย</p></div>
+    <div class="card"><h2>ด้านของคำถาม (หมวด)</h2>
+      <div class="bar"><input type="hidden" id="cid"><input id="cname" placeholder="ชื่อด้าน เช่น ครูผู้สอน" maxlength="60"><input id="csort" type="number" placeholder="ลำดับ" style="width:80px"><button id="csave">บันทึก</button><button class="sec" id="cclr">ล้างฟอร์ม</button></div>
+      <div class="err" id="ce"></div><div class="wide" id="catl"></div></div>
+    <div class="card"><div class="bar"><select id="qf"></select></div><div class="wide" id="ql"></div></div>
+  </section>
+
+  <section id="t-stu" class="hide">
+    <div class="card"><h2>นำเข้ารายชื่อนักเรียนจากไฟล์ CSV</h2>
+      <p class="mu">คอลัมน์: <b>รหัสนักเรียน, ชื่อ-สกุล, ห้อง, แผนการเรียน</b> · ชื่อแผนต้องตรงกับที่สร้างไว้ (เว้นว่างได้ = ให้นักเรียนเลือกเอง) · รหัสซ้ำจะถูกอัปเดตทับ · รองรับไฟล์ UTF-8 และ CSV จาก Excel ภาษาไทย</p>
+      <div class="bar"><input type="file" id="sfile" accept=".csv,.txt"><button class="sec" id="stpl">⬇️ ดาวน์โหลดไฟล์ตัวอย่าง</button></div>
+      <div id="sprev"></div></div>
+    <div class="card"><h2>เพิ่มทีละคน</h2><div class="bar">
+      <input id="s-id" placeholder="รหัส" style="width:110px" maxlength="20"><input id="s-nm" placeholder="ชื่อ-สกุล" maxlength="80"><input id="s-cl" placeholder="ห้อง" style="width:90px" maxlength="20"><select id="s-pl"></select><button id="s-add">บันทึก</button></div>
+      <div class="err" id="s-e"></div></div>
+    <div class="card"><div class="bar"><input id="s-q" placeholder="ค้นหารหัส/ชื่อ/ห้อง">
+      <select id="s-f"><option value="">ทั้งหมด</option><option value="ns">ยังไม่ตอบ (นักเรียน)</option><option value="np">ยังไม่ตอบ (ผู้ปกครอง)</option></select>
+      <button class="sec" id="s-csv">⬇️ ส่งออกรายการนี้</button><button class="del" id="s-clr">ล้างรายชื่อทั้งหมด</button></div>
+      <div class="wide" id="sl"></div></div>
+  </section>
+
+  <section id="t-data" class="hide">
+    <div class="card"><div class="bar"><button id="csv">⬇️ ส่งออก CSV</button><button class="del" id="rst">ล้างข้อมูลรอบนี้</button></div>
+      <div class="wide" id="dt"></div></div>
+  </section>
+
+  <section id="t-set" class="hide">
+    <div class="card"><h2>ตั้งค่าระบบ</h2>
+      <div class="bar"><label><input type="checkbox" id="sopen"> เปิดรับแบบสอบถาม</label></div>
+      <div class="bar"><label><input type="checkbox" id="sreq"> รับเฉพาะรหัสนักเรียนที่อยู่ในรายชื่อ (และล็อกแผนตามรายชื่อ)</label></div>
+      <div class="bar"><input id="stitle" placeholder="ชื่อแบบสอบถาม" maxlength="120" style="flex:1;min-width:240px"><button id="ssave">บันทึก</button></div>
+      <h2 style="margin-top:20px">ประกาศความเป็นส่วนตัว (PDPA)</h2>
+      <div class="bar"><label><input type="checkbox" id="scon"> ต้องกดยินยอมก่อนทำแบบสอบถาม</label></div>
+      <textarea id="sctext" rows="6" style="width:100%" maxlength="2000"></textarea>
+      <div class="bar" style="margin-top:8px"><button id="scsave">บันทึกประกาศ</button></div>
+      <p class="mu">ข้อความนี้เป็นแม่แบบ ควรให้ผู้รับผิดชอบด้านข้อมูลส่วนบุคคลของโรงเรียนตรวจทาน</p>
+      <div class="mu" id="sm"></div></div>
+  </section>
+</div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ROLE = {student:"นักเรียน", parent:"ผู้ปกครอง", both:"ทั้งสอง"};
+const COL = ["#dc2626","#f97316","#eab308","#84cc16","#16a34a"];
+const lvl = a => a == null ? "-" : a >= 4.5 ? "มากที่สุด" : a >= 3.5 ? "มาก" : a >= 2.5 ? "ปานกลาง" : a >= 1.5 ? "น้อย" : "น้อยที่สุด";
+const f2 = a => a == null ? "-" : a.toFixed(2);
+let KEY = sessionStorage.getItem("ak") || "", PLANS = [], QS = [];
+
+async function api(action, params = {}) {
+  const r = await fetch("/api/admin?" + new URLSearchParams({action, ...params}), {headers: {"X-Admin-Key": KEY}});
+  if (r.status === 401) { logout(); throw new Error("unauthorized"); }
+  return r.json();
+}
+async function post(body) {
+  const r = await fetch("/api/admin", {method: "POST", headers: {"X-Admin-Key": KEY, "Content-Type": "application/json"}, body: JSON.stringify(body)});
+  const j = await r.json(); if (!r.ok) throw new Error(j.error || "ผิดพลาด"); return j;
+}
+function logout() { sessionStorage.removeItem("ak"); KEY = ""; $("#app").classList.add("hide"); $("#login").classList.remove("hide"); }
+
+async function enter() {
+  try { await api("ping"); } catch { return; }
+  $("#login").classList.add("hide"); $("#app").classList.remove("hide");
+  await loadPlans(); await loadCats(); await loadRounds(); loadSum();
+}
+$("#lg").onclick = async () => {
+  KEY = $("#pw").value; sessionStorage.setItem("ak", KEY);
+  const r = await fetch("/api/admin?action=ping", {headers: {"X-Admin-Key": KEY}});
+  if (r.ok) { $("#le").textContent = ""; enter(); } else $("#le").textContent = "รหัสผ่านไม่ถูกต้อง (หรือยังไม่ได้ตั้ง ADMIN_PASSWORD)";
+};
+$("#pw").onkeydown = e => e.key === "Enter" && $("#lg").click();
+$("#out").onclick = logout;
+if (KEY) enter();
+
+$("#tabs").onclick = e => {
+  const t = e.target.dataset.t; if (!t) return;
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b === e.target));
+  document.querySelectorAll("section").forEach(s => s.classList.toggle("hide", s.id !== "t-" + t));
+  TAB = t; LOADERS()[t]();
+};
+
+/* ---------- แผนการเรียน ---------- */
+async function loadPlans() {
+  PLANS = (await api("plans")).plans;
+  const opt = (first) => `<option value="">${first}</option>` + PLANS.map(p => `<option value="${p.id}">${esc(p.name)}${p.active ? "" : " (ปิด)"}</option>`).join("");
+  const keep = [$("#fp").value, $("#qf").value];
+  $("#fp").innerHTML = opt("ทุกแผนการเรียน"); $("#qf").innerHTML = opt("ทุกแผน (แสดงทั้งหมด)");
+  $("#qplan").innerHTML = opt("ทุกแผน (คำถามกลาง)"); $("#s-pl").innerHTML = opt("— ไม่ระบุแผน —");
+  $("#fp").value = keep[0]; $("#qf").value = keep[1];
+  $("#pl").innerHTML = `<table><tr><th>ชื่อแผน</th><th>สถานะ</th><th></th></tr>` + PLANS.map(p =>
+    `<tr><td>${esc(p.name)}</td><td>${p.active ? "✅ เปิด" : "⛔ ปิด"}</td><td><button class="sm sec" onclick="editPlan(${p.id})">แก้ไข</button></td></tr>`).join("") + `</table>`;
+}
+window.editPlan = id => { const p = PLANS.find(x => x.id === id); $("#pid").value = p.id; $("#pname").value = p.name; $("#pact").checked = !!p.active; scrollTo(0, 0); };
+$("#pclr").onclick = () => { $("#pid").value = ""; $("#pname").value = ""; $("#pact").checked = true; };
+$("#psave").onclick = async () => {
+  try { await post({action: "plan_save", id: $("#pid").value, name: $("#pname").value, active: $("#pact").checked}); $("#pe").textContent = ""; $("#pclr").click(); loadPlans(); }
+  catch (e) { $("#pe").textContent = e.message; }
+};
+
+/* ---------- คำถาม ---------- */
+async function loadQ() {
+  QS = (await api("questions")).questions;
+  const f = $("#qf").value, pn = id => id ? (PLANS.find(p => p.id === id) || {}).name : "ทุกแผน";
+  const rows = QS.filter(q => !f || q.plan_id === null || String(q.plan_id) === f);
+  $("#ql").innerHTML = `<table><tr><th>แผน</th><th>ผู้ตอบ</th><th>ด้าน</th><th>คำถาม</th><th>ลำดับ</th><th>สถานะ</th><th></th></tr>` + rows.map(q =>
+    `<tr><td>${esc(pn(q.plan_id))}</td><td><span class="tag">${ROLE[q.role]}</span></td><td>${esc((CATS.find(x => x.id === q.category_id) || {}).name || "—")}</td><td>${esc(q.text)}</td><td>${q.sort}</td><td>${q.active ? "✅" : "⛔"}</td>
+    <td><button class="sm sec" onclick="editQ(${q.id})">แก้ไข</button></td></tr>`).join("") + `</table>`;
+}
+$("#qf").onchange = loadQ;
+window.editQ = id => { const q = QS.find(x => x.id === id);
+  $("#qid").value = q.id; $("#qplan").value = q.plan_id ?? ""; $("#qcat").value = q.category_id ?? ""; $("#qrole").value = q.role; $("#qsort").value = q.sort; $("#qtext").value = q.text; $("#qact").checked = !!q.active; scrollTo(0, 0); };
+$("#qclr").onclick = () => { $("#qid").value = ""; $("#qtext").value = ""; $("#qsort").value = ""; $("#qact").checked = true; };
+$("#qsave").onclick = async () => {
+  try { await post({action: "question_save", id: $("#qid").value, plan_id: $("#qplan").value, category_id: $("#qcat").value, role: $("#qrole").value, sort: $("#qsort").value, text: $("#qtext").value, active: $("#qact").checked});
+    $("#qe").textContent = ""; $("#qclr").click(); loadQ(); } catch (e) { $("#qe").textContent = e.message; }
+};
+
+/* ---------- สรุปผล ---------- */
+$("#fgo").onclick = loadSum;
+async function loadSum() {
+  const d = await api("summary", {round: $("#rid").value, plan: $("#fp").value, role: $("#fr").value, class: $("#fc").value});
+  $("#cards").innerHTML = [
+    ["ผู้ตอบทั้งหมด", d.total], ["นักเรียน", d.byRole.student || 0], ["ผู้ปกครอง", d.byRole.parent || 0],
+    ["คะแนนเฉลี่ยรวม", f2(d.overall)], ["ระดับความพึงพอใจ", lvl(d.overall)],
+  ].map(([k, v]) => `<div class="stat"><span class="mu">${k}</span><b>${esc(v)}</b></div>`).join("");
+  $("#bp").innerHTML = d.byPlan.length ? `<table><tr><th>แผนการเรียน</th><th>จำนวน</th><th>เฉลี่ย</th><th>ระดับ</th></tr>` +
+    d.byPlan.map(p => `<tr><td>${esc(p.name)}</td><td>${p.count}</td><td>${f2(p.avg)}</td><td>${lvl(p.avg)}</td></tr>`).join("") + `</table>` : `<p class="mu">ยังไม่มีข้อมูล</p>`;
+  $("#bq").innerHTML = d.questions.length ? `<table><tr><th>คำถาม</th><th>ผู้ตอบ</th><th>แผน</th><th>n</th><th>เฉลี่ย</th><th>ระดับ</th><th>การกระจาย</th></tr>` +
+    d.questions.map(q => `<tr><td>${esc(q.text)}</td><td>${ROLE[q.role]}</td><td>${esc(q.plan || "ทุกแผน")}</td><td>${q.n}</td><td><b>${f2(q.avg)}</b></td><td>${lvl(q.avg)}</td>
+    <td><div class="dist">${q.dist.map((n, i) => `<div title="${i + 1}: ${n}" style="width:${n / q.n * 100}%;background:${COL[i]}"></div>`).join("")}</div></td></tr>`).join("") + `</table>` : `<p class="mu">ยังไม่มีข้อมูล</p>`;
+  const meter = v => `<div style="background:var(--bd);border-radius:6px;height:14px;min-width:120px"><div style="width:${(v || 0) / 5 * 100}%;background:var(--pr);height:100%;border-radius:6px"></div></div>`;
+  const tbl = (head, rows) => rows.length ? `<table><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr>${rows.join("")}</table>` : `<p class="mu">ยังไม่มีข้อมูล</p>`;
+  $("#bc").innerHTML = tbl(["ด้าน", "เฉลี่ย", "ระดับ", ""], d.byCat.map(x => `<tr><td>${esc(x.name)}</td><td><b>${f2(x.avg)}</b></td><td>${lvl(x.avg)}</td><td>${meter(x.avg)}</td></tr>`));
+  $("#bk").innerHTML = tbl(["ห้อง", "จำนวนผู้ตอบ", "เฉลี่ย", "ระดับ", ""], d.byClass.map(x => `<tr><td>${esc(x.name)}</td><td>${x.count}</td><td><b>${f2(x.avg)}</b></td><td>${lvl(x.avg)}</td><td>${meter(x.avg)}</td></tr>`));
+  $("#tr").innerHTML = tbl(["รอบ", "จำนวนผู้ตอบ", "เฉลี่ย", "ระดับ", ""], d.trend.map(x => `<tr><td>${esc(x.round)}</td><td>${x.count}</td><td><b>${f2(x.avg)}</b></td><td>${lvl(x.avg)}</td><td>${meter(x.avg)}</td></tr>`));
+  const fcv = $("#fc").value; $("#fc").innerHTML = '<option value="">ทุกห้อง</option>' + d.classes.map(c => `<option>${esc(c)}</option>`).join(""); $("#fc").value = fcv;
+  $("#phead").innerHTML = `<h1>รายงานผลการประเมินความพึงพอใจในการเรียน</h1><p><b>${esc(d.round)}</b> · ${esc($("#fp").selectedOptions[0].text)} · ${esc($("#fr").selectedOptions[0].text)} · ${esc($("#fc").selectedOptions[0].text)}</p>
+    <p class="mu">พิมพ์เมื่อ ${new Date().toLocaleDateString("th-TH", {dateStyle: "long"})} · เกณฑ์แปลผล: 4.51–5.00 มากที่สุด · 3.51–4.50 มาก · 2.51–3.50 ปานกลาง · 1.51–2.50 น้อย · 1.00–1.50 น้อยที่สุด</p>`;
+  const pc = (a, b) => b ? (a / b * 100).toFixed(1) + "%" : "-";
+  $("#rt").innerHTML = d.rate && d.rate.length ? `<table><tr><th>แผนการเรียน</th><th>นักเรียนในรายชื่อ</th><th>นักเรียนตอบ</th><th>%</th><th>ผู้ปกครองตอบ</th><th>%</th></tr>` +
+    d.rate.map(x => `<tr><td>${esc(x.name)}</td><td>${x.roster}</td><td>${x.student}</td><td>${pc(x.student, x.roster)}</td><td>${x.parent}</td><td>${pc(x.parent, x.roster)}</td></tr>`).join("") + `</table>` :
+    `<p class="mu">ยังไม่มีรายชื่อนักเรียน — นำเข้าที่แท็บ "รายชื่อนักเรียน" เพื่อดูอัตราการตอบ</p>`;
+  const mx = Math.max(1, ...d.daily.map(x => x.n));
+  $("#dl").innerHTML = d.daily.map(x => `<div style="height:${x.n / mx * 100}%" title="${x.date}"><span>${x.n}</span></div>`).join("") || `<span class="mu">ยังไม่มีข้อมูล</span>`;
+  $("#cl").innerHTML = d.comments.map(c => `<div class="cm">${esc(c.text)}<div class="mu">${esc(c.student_id)} · ${ROLE[c.role]} · ${esc(c.plan)} · ${esc(c.at)}</div></div>`).join("") || `<p class="mu">ยังไม่มีข้อเสนอแนะ</p>`;
+}
+
+/* ---------- ข้อมูลผู้ตอบ ---------- */
+let ROWS = [];
+async function loadData() {
+  ROWS = (await api("responses", {round: $("#rid").value})).rows;
+  const avg = r => { const v = Object.values(JSON.parse(r.answers)); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+  $("#dt").innerHTML = `<p class="mu">ทั้งหมด ${ROWS.length} รายการ (แสดง 200 ล่าสุด)</p><table><tr><th>วันที่</th><th>รหัส</th><th>ห้อง</th><th>แผน</th><th>ผู้ตอบ</th><th>เฉลี่ย</th><th></th></tr>` +
+    ROWS.slice(0, 200).map(r => `<tr><td>${esc(r.created_at)}</td><td>${esc(r.student_id)}</td><td>${esc(r.class)}</td><td>${esc(r.plan_name)}</td><td>${ROLE[r.role]}</td><td>${f2(avg(r))}</td>
+    <td><button class="sm del" onclick="delRow(${r.id})">ลบ</button></td></tr>`).join("") + `</table>`;
+}
+window.delRow = async id => { if (confirm("ลบรายการนี้? (นักเรียนจะตอบใหม่ได้)")) { await post({action: "response_delete", id}); loadData(); } };
+$("#rst").onclick = async () => { if (confirm("ลบข้อมูลผู้ตอบของรอบ \"" + $("#rid").selectedOptions[0].text + "\" ทั้งหมด? ย้อนกลับไม่ได้") && confirm("ยืนยันอีกครั้ง")) { await post({action: "reset_responses", round_id: $("#rid").value}); loadData(); } };
+$("#csv").onclick = async () => {
+  const qs = (await api("questions")).questions, qm = Object.fromEntries(qs.map(q => [q.id, q.text])), cm = Object.fromEntries(qs.map(q => [q.id, (CATS.find(x => x.id === q.category_id) || {}).name || ""])), RN = $("#rid").selectedOptions[0].text;
+  const rows = (await api("responses", {round: $("#rid").value})).rows, c = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const out = [["รอบ", "วันที่", "รหัสนักเรียน", "ห้อง", "แผน", "ผู้ตอบ", "ด้าน", "คำถาม", "คะแนน", "ข้อเสนอแนะ"].map(c).join(",")];
+  rows.forEach(r => Object.entries(JSON.parse(r.answers)).forEach(([id, v]) => out.push([RN, r.created_at, r.student_id, r.class, r.plan_name, ROLE[r.role], cm[id], qm[id], v, r.comment].map(c).join(","))));
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["\ufeff" + out.join("\n")], {type: "text/csv;charset=utf-8"}));
+  a.download = "survey-results.csv"; a.click();
+};
+
+/* ---------- ตั้งค่า ---------- */
+async function loadSet() { const s = await api("settings"); $("#sopen").checked = s.survey_open !== "0"; $("#stitle").value = s.title || ""; $("#sreq").checked = s.require_roster === "1"; $("#scon").checked = s.consent_required !== "0"; $("#sctext").value = s.consent_text || ""; }
+$("#sopen").onchange = async e => { await post({action: "setting_save", key: "survey_open", value: e.target.checked ? "1" : "0"}); $("#sm").textContent = "บันทึกแล้ว"; };
+$("#ssave").onclick = async () => { await post({action: "setting_save", key: "title", value: $("#stitle").value}); $("#sm").textContent = "บันทึกแล้ว"; };
+
+/* ---------- รายชื่อนักเรียน ---------- */
+let STU = [], IMP = [];
+const csvc = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
+function dl(name, text) { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\ufeff" + text], {type: "text/csv;charset=utf-8"})); a.download = name; a.click(); }
+function parseCSV(t) {
+  const rows = []; let r = [], f = "", q = false; t = t.replace(/^\ufeff/, "");
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (q) { if (c === '"') { if (t[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === "," || c === "\t") { r.push(f); f = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && t[i + 1] === "\n") i++; r.push(f); f = ""; rows.push(r); r = []; }
+    else f += c;
+  }
+  if (f !== "" || r.length) { r.push(f); rows.push(r); }
+  return rows.filter(x => x.some(v => v.trim() !== ""));
+}
+$("#stpl").onclick = () => dl("students-template.csv", ["รหัสนักเรียน,ชื่อ-สกุล,ห้อง,แผนการเรียน",
+  [12345, "สมชาย ใจดี", "ม.4/1", PLANS[0] ? PLANS[0].name : "วิทย์-คณิต"].map(csvc).join(","),
+  [12346, "สมหญิง รักเรียน", "ม.4/2", PLANS[1] ? PLANS[1].name : "ศิลป์-ภาษา"].map(csvc).join(",")].join("\n") + "\n");
+$("#sfile").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  const buf = await f.arrayBuffer(); let txt;
+  try { txt = new TextDecoder("utf-8", {fatal: true}).decode(buf); } catch { txt = new TextDecoder("windows-874").decode(buf); }
+  const rows = parseCSV(txt);
+  const start = rows.length && /รหัส|id/i.test(rows[0][0] || "") ? 1 : 0;
+  IMP = rows.slice(start).map((r, i) => ({line: i + start + 1, student_id: (r[0] || "").trim(), name: (r[1] || "").trim(), class: (r[2] || "").trim(), plan: (r[3] || "").trim()}));
+  $("#sprev").innerHTML = `<p>พบ <b>${IMP.length}</b> แถว (ตัวอย่าง 5 แถวแรก)</p><div class="wide"><table><tr><th>รหัส</th><th>ชื่อ-สกุล</th><th>ห้อง</th><th>แผน</th></tr>` +
+    IMP.slice(0, 5).map(r => `<tr><td>${esc(r.student_id)}</td><td>${esc(r.name)}</td><td>${esc(r.class)}</td><td>${esc(r.plan)}</td></tr>`).join("") +
+    `</table></div><div class="bar" style="margin-top:10px"><button id="sgo" ${IMP.length ? "" : "disabled"}>นำเข้า ${IMP.length} รายการ</button></div><div id="sres"></div>`;
+  $("#sgo").onclick = doImport;
+};
+async function doImport() {
+  $("#sgo").disabled = true; $("#sgo").textContent = "กำลังนำเข้า..."; let saved = 0; const errs = [];
+  for (let i = 0; i < IMP.length; i += 200) {
+    try { const j = await post({action: "students_import", rows: IMP.slice(i, i + 200)}); saved += j.saved; errs.push(...j.errors); }
+    catch (e) { errs.push("ผิดพลาด: " + e.message); break; }
+  }
+  $("#sgo").textContent = "เสร็จสิ้น";
+  $("#sres").innerHTML = `<p style="color:var(--ok)">✅ บันทึกสำเร็จ ${saved} รายการ</p>` +
+    (errs.length ? `<p class="err">ข้ามรายการที่มีปัญหา:</p><ul>${errs.slice(0, 60).map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "");
+  loadStu();
+}
+async function loadStu() { STU = (await api("students", {round: $("#rid").value})).students; renderStu(); }
+function stuFiltered() {
+  const q = $("#s-q").value.trim().toLowerCase(), f = $("#s-f").value;
+  return STU.filter(s => (!q || [s.student_id, s.name, s.class].join(" ").toLowerCase().includes(q)) && (f !== "ns" || !s.sd) && (f !== "np" || !s.pd));
+}
+function renderStu() {
+  const L = stuFiltered(), ok = v => v ? "✅" : "—";
+  $("#sl").innerHTML = `<p class="mu">ทั้งหมด ${STU.length} คน · ตรงเงื่อนไข ${L.length} คน (แสดงสูงสุด 300)</p>` + (L.length ?
+    `<table><tr><th>รหัส</th><th>ชื่อ-สกุล</th><th>ห้อง</th><th>แผน</th><th>นักเรียนตอบ</th><th>ผู้ปกครองตอบ</th><th></th></tr>` +
+    L.slice(0, 300).map(s => `<tr><td>${esc(s.student_id)}</td><td>${esc(s.name)}</td><td>${esc(s.class)}</td><td>${esc(s.plan_name || "—")}</td><td>${ok(s.sd)}</td><td>${ok(s.pd)}</td>
+    <td><button class="sm del" onclick="delStu('${esc(s.student_id)}')">ลบ</button></td></tr>`).join("") + `</table>` : "");
+}
+$("#s-q").oninput = renderStu; $("#s-f").onchange = renderStu;
+window.delStu = async id => { if (confirm("ลบนักเรียนรหัส " + id + " ออกจากรายชื่อ?")) { await post({action: "student_delete", student_id: id}); loadStu(); } };
+$("#s-clr").onclick = async () => { if (confirm("ล้างรายชื่อนักเรียนทั้งหมด? (ผลการตอบไม่ถูกลบ)")) { await post({action: "students_clear"}); loadStu(); } };
+$("#s-add").onclick = async () => {
+  const p = PLANS.find(x => String(x.id) === $("#s-pl").value);
+  try {
+    const j = await post({action: "students_import", rows: [{line: 1, student_id: $("#s-id").value, name: $("#s-nm").value, class: $("#s-cl").value, plan: p ? p.name : ""}]});
+    if (j.errors.length) throw new Error(j.errors[0]);
+    $("#s-e").textContent = ""; $("#s-id").value = $("#s-nm").value = ""; loadStu();
+  } catch (e) { $("#s-e").textContent = e.message; }
+};
+$("#s-csv").onclick = () => dl("students.csv", [["รหัสนักเรียน", "ชื่อ-สกุล", "ห้อง", "แผนการเรียน", "นักเรียนตอบ", "ผู้ปกครองตอบ"].map(csvc).join(","),
+  ...stuFiltered().map(s => [s.student_id, s.name, s.class, s.plan_name || "", s.sd ? "ตอบแล้ว" : "ยังไม่ตอบ", s.pd ? "ตอบแล้ว" : "ยังไม่ตอบ"].map(csvc).join(","))].join("\n"));
+$("#sreq").onchange = async e => { await post({action: "setting_save", key: "require_roster", value: e.target.checked ? "1" : "0"}); $("#sm").textContent = "บันทึกแล้ว"; };
+
+/* ---------- รอบการประเมิน / ด้าน / ประกาศ / พิมพ์ ---------- */
+let TAB = "sum", CATS = [], ROUNDS = [], CUR = 0;
+const LOADERS = () => ({sum: loadSum, round: loadRounds, plan: loadPlans, q: loadQ, stu: loadStu, data: loadData, set: loadSet});
+$("#rid").onchange = () => LOADERS()[TAB]();
+$("#fprint").onclick = () => print();
+
+async function loadRounds() {
+  const d = await api("rounds"); ROUNDS = d.rounds; CUR = d.current;
+  const keep = $("#rid").value;
+  $("#rid").innerHTML = ROUNDS.map(r => `<option value="${r.id}">${esc(r.name)}${r.id === CUR ? " (ปัจจุบัน)" : ""}${r.status === "open" ? "" : " 🔒"}</option>`).join("");
+  $("#rid").value = ROUNDS.some(r => String(r.id) === keep) ? keep : CUR;
+  $("#rl").innerHTML = `<table><tr><th>รอบ</th><th>สถานะ</th><th>ผู้ตอบ</th><th></th></tr>` + ROUNDS.map(r =>
+    `<tr><td>${esc(r.name)} ${r.id === CUR ? '<span class="tag">รอบปัจจุบัน</span>' : ""}</td><td>${r.status === "open" ? "🟢 เปิดรับ" : "🔒 ปิดรับ"}</td><td>${r.n}</td><td>
+    ${r.id === CUR ? "" : `<button class="sm" onclick="setCur(${r.id})">ตั้งเป็นรอบปัจจุบัน</button> `}
+    <button class="sm sec" onclick="togRound(${r.id})">${r.status === "open" ? "ปิดรับ" : "เปิดรับ"}</button>
+    <button class="sm sec" onclick="renRound(${r.id})">เปลี่ยนชื่อ</button>
+    ${r.n || r.id === CUR ? "" : `<button class="sm del" onclick="delRound(${r.id})">ลบ</button>`}</td></tr>`).join("") + `</table>`;
+}
+window.setCur = async id => { await post({action: "setting_save", key: "current_round", value: String(id)}); loadRounds(); };
+window.togRound = async id => { const r = ROUNDS.find(x => x.id === id); await post({action: "round_save", id, name: r.name, status: r.status === "open" ? "closed" : "open"}); loadRounds(); };
+window.renRound = async id => { const r = ROUNDS.find(x => x.id === id), n = prompt("ชื่อรอบใหม่", r.name); if (n) { await post({action: "round_save", id, name: n, status: r.status}); loadRounds(); } };
+window.delRound = async id => { if (confirm("ลบรอบนี้?")) { try { await post({action: "round_delete", id}); loadRounds(); } catch (e) { alert(e.message); } } };
+$("#radd").onclick = async () => {
+  try { await post({action: "round_save", name: $("#rname").value}); $("#rname").value = ""; $("#re").textContent = ""; $("#rid").innerHTML = ""; loadRounds(); }
+  catch (e) { $("#re").textContent = e.message; }
+};
+
+async function loadCats() {
+  CATS = (await api("categories")).categories;
+  $("#qcat").innerHTML = `<option value="">— ไม่ระบุด้าน —</option>` + CATS.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  $("#catl").innerHTML = CATS.length ? `<table><tr><th>ลำดับ</th><th>ด้าน</th><th></th></tr>` + CATS.map(c =>
+    `<tr><td>${c.sort}</td><td>${esc(c.name)}</td><td><button class="sm sec" onclick="editCat(${c.id})">แก้ไข</button> <button class="sm del" onclick="delCat(${c.id})">ลบ</button></td></tr>`).join("") + `</table>` : `<p class="mu">ยังไม่มีด้าน</p>`;
+}
+window.editCat = id => { const c = CATS.find(x => x.id === id); $("#cid").value = c.id; $("#cname").value = c.name; $("#csort").value = c.sort; };
+window.delCat = async id => { if (confirm("ลบด้านนี้? (คำถามในด้านนี้จะกลายเป็น 'ไม่ระบุด้าน')")) { await post({action: "category_delete", id}); await loadCats(); loadQ(); } };
+$("#cclr").onclick = () => { $("#cid").value = ""; $("#cname").value = ""; $("#csort").value = ""; };
+$("#csave").onclick = async () => {
+  try { await post({action: "category_save", id: $("#cid").value, name: $("#cname").value, sort: $("#csort").value}); $("#ce").textContent = ""; $("#cclr").click(); await loadCats(); loadQ(); }
+  catch (e) { $("#ce").textContent = e.message; }
+};
+$("#scsave").onclick = async () => {
+  await post({action: "setting_save", key: "consent_text", value: $("#sctext").value});
+  await post({action: "setting_save", key: "consent_required", value: $("#scon").checked ? "1" : "0"});
+  $("#sm").textContent = "บันทึกแล้ว";
+};
+</script>
+</body>
+</html>

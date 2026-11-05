@@ -1,0 +1,58 @@
+-- ติดตั้งใหม่ทั้งหมด (⚠️ ลบข้อมูลเดิม) — ถ้าติดตั้งไว้แล้วและมีข้อมูลจริง ให้รัน schema_v2.sql แทน
+DROP TABLE IF EXISTS responses;
+DROP TABLE IF EXISTS questions;
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS rounds;
+DROP TABLE IF EXISTS students;
+DROP TABLE IF EXISTS plans;
+DROP TABLE IF EXISTS settings;
+
+CREATE TABLE plans (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, active INTEGER DEFAULT 1);
+CREATE TABLE rounds (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'open', created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, sort INTEGER DEFAULT 0);
+CREATE TABLE questions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  plan_id INTEGER,                      -- NULL = ใช้กับทุกแผนการเรียน
+  category_id INTEGER,                  -- ด้านของคำถาม
+  role TEXT NOT NULL DEFAULT 'both',    -- student | parent | both
+  text TEXT NOT NULL,
+  sort INTEGER DEFAULT 0,
+  active INTEGER DEFAULT 1
+);
+CREATE TABLE students (student_id TEXT PRIMARY KEY, name TEXT, class TEXT, plan_id INTEGER);
+CREATE TABLE responses (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  round_id INTEGER NOT NULL,
+  student_id TEXT NOT NULL,
+  plan_id INTEGER NOT NULL,
+  role TEXT NOT NULL,
+  class TEXT,                           -- ห้อง ณ เวลาที่ตอบ (จากรายชื่อ)
+  answers TEXT NOT NULL,                -- JSON {"คำถามid":คะแนน}
+  comment TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(round_id, student_id, role)
+);
+CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT);
+
+INSERT INTO rounds (name) VALUES ('ภาคเรียนที่ 2/2569');
+INSERT INTO settings VALUES ('survey_open','1'),('require_roster','0'),('current_round','1'),('consent_required','1'),
+ ('title','แบบสอบถามความพึงพอใจในการเรียน'),
+ ('consent_text','ข้อมูลที่ท่านกรอก ได้แก่ รหัสนักเรียน แผนการเรียน และคำตอบแบบสอบถาม จะถูกใช้เพื่อประเมินและปรับปรุงคุณภาพการจัดการเรียนการสอนของโรงเรียนเท่านั้น
+ผู้ดูแลระบบที่โรงเรียนมอบหมายเท่านั้นที่เข้าถึงข้อมูลรายบุคคลได้ รายงานผลจะนำเสนอเป็นภาพรวม ไม่ระบุตัวบุคคล
+ข้อมูลจะถูกเก็บตามระยะเวลาที่โรงเรียนกำหนด ท่านสามารถติดต่อโรงเรียนเพื่อขอใช้สิทธิตามกฎหมายคุ้มครองข้อมูลส่วนบุคคลได้');
+INSERT INTO plans (name) VALUES ('วิทย์-คณิต'),('ศิลป์-ภาษา'),('ศิลป์-คำนวณ');
+INSERT INTO categories (name,sort) VALUES ('ครูผู้สอน',1),('การจัดการเรียนการสอน',2),('สื่อและสภาพแวดล้อม',3),('ภาพรวม',4);
+
+INSERT INTO questions (plan_id,category_id,role,text,sort) VALUES
+ (NULL,1,'student','ครูผู้สอนอธิบายเนื้อหาเข้าใจง่าย',1),
+ (NULL,2,'student','กิจกรรมการเรียนการสอนน่าสนใจ',2),
+ (NULL,3,'student','บรรยากาศในห้องเรียนเอื้อต่อการเรียนรู้',3),
+ (NULL,1,'student','ได้รับการดูแลและให้คำปรึกษาจากครูอย่างเหมาะสม',4),
+ (NULL,4,'student','ภาพรวมพึงพอใจต่อการเรียนในโรงเรียน',9),
+ (NULL,1,'parent','ครูผู้สอนมีความเอาใจใส่ต่อนักเรียน',1),
+ (NULL,2,'parent','โรงเรียนสื่อสารข้อมูลกับผู้ปกครองอย่างสม่ำเสมอ',2),
+ (NULL,2,'parent','นักเรียนมีพัฒนาการด้านการเรียนที่ดีขึ้น',3),
+ (NULL,4,'parent','ภาพรวมพึงพอใจต่อการจัดการศึกษาของโรงเรียน',9),
+ (1,3,'both','ห้องปฏิบัติการวิทยาศาสตร์และอุปกรณ์เพียงพอ',5),
+ (2,2,'both','กิจกรรมส่งเสริมทักษะด้านภาษามีความหลากหลาย',5),
+ (3,2,'both','เนื้อหาวิชาคำนวณเหมาะสมกับระดับของนักเรียน',5);

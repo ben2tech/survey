@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>แบบสอบถามความพึงพอใจในการเรียน</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--tx:#1f2937;--mu:#6b7280;--pr:#4f46e5;--bd:#e5e7eb}
+@media(prefers-color-scheme:dark){:root{--bg:#111827;--card:#1f2937;--tx:#f3f4f6;--mu:#9ca3af;--bd:#374151}}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Sarabun","Noto Sans Thai",system-ui,sans-serif;background:var(--bg);color:var(--tx);padding:16px}
+.wrap{max-width:720px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:22px;margin-bottom:16px}
+h1{font-size:1.4rem;margin:0 0 6px}
+.mu{color:var(--mu);font-size:.9rem}
+label.f{display:block;font-weight:600;margin:14px 0 6px}
+input[type=text],select,textarea{width:100%;padding:12px;border:1px solid var(--bd);border-radius:10px;font:inherit;background:transparent;color:var(--tx)}
+select option{color:#111}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.role{border:2px solid var(--bd);border-radius:12px;padding:14px;text-align:center;cursor:pointer;font-weight:600}
+.role.on{border-color:var(--pr);background:rgba(79,70,229,.1)}
+button.go{width:100%;margin-top:18px;padding:13px;border:0;border-radius:10px;background:var(--pr);color:#fff;font-size:1rem;font-weight:700;cursor:pointer}
+button.go:disabled{opacity:.5}
+.q{padding:14px 0;border-bottom:1px solid var(--bd)}
+.scale{display:flex;gap:6px;margin-top:8px}
+.scale label{flex:1;text-align:center}
+.scale input{display:none}
+.scale span{display:block;padding:10px 0;border:1px solid var(--bd);border-radius:8px;cursor:pointer}
+.scale input:checked+span{background:var(--pr);color:#fff;border-color:var(--pr)}
+.legend{display:flex;justify-content:space-between;font-size:.75rem;color:var(--mu);margin-top:4px}
+.err{color:#dc2626;margin-top:10px;font-size:.9rem}
+.hide{display:none}
+.ch{margin:20px 0 0;font-size:1.05rem;color:var(--pr)}
+.done{text-align:center;padding:30px 10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="card" id="s1">
+  <h1 id="ttl">📋 แบบสอบถามความพึงพอใจในการเรียน</h1>
+  <p class="mu" id="rnd"></p>
+  <p class="mu" id="closed" style="display:none;color:#dc2626">ขณะนี้ปิดรับแบบสอบถาม</p>
+  <label class="f" for="sid">รหัสนักเรียน</label>
+  <input type="text" id="sid" inputmode="numeric" placeholder="เช่น 12345" maxlength="20" autocomplete="off">
+  <div class="mu" id="hint" style="margin-top:6px"></div>
+  <label class="f" for="plan">แผนการเรียน</label>
+  <select id="plan"><option value="">— เลือกแผนการเรียน —</option></select>
+  <label class="f">ผู้ตอบแบบสอบถาม</label>
+  <div class="roles">
+    <div class="role" data-r="student">🎒 นักเรียน</div>
+    <div class="role" data-r="parent">👨‍👩‍👧 ผู้ปกครอง</div>
+  </div>
+  <div id="cons" class="hide" style="margin-top:16px;border:1px solid var(--bd);border-radius:10px;padding:12px">
+    <b>🔒 ประกาศความเป็นส่วนตัว</b>
+    <div class="mu" id="ctext" style="white-space:pre-wrap;margin:6px 0"></div>
+    <label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="cchk" style="margin-top:4px"><span>ข้าพเจ้าได้อ่านและยินยอมให้เก็บและใช้ข้อมูลตามประกาศนี้</span></label>
+  </div>
+  <div class="err" id="e1"></div>
+  <button class="go" id="start" disabled>เริ่มทำแบบสอบถาม</button>
+</div>
+
+<div class="card hide" id="s2">
+  <h1 id="t2"></h1>
+  <p class="mu">รหัส: <b id="who"></b> · แผน: <b id="pn"></b><br>ให้คะแนน 1 (น้อยที่สุด) ถึง 5 (มากที่สุด)</p>
+  <div id="qs"></div>
+  <label class="f">ข้อเสนอแนะเพิ่มเติม</label>
+  <textarea id="cm" maxlength="500" rows="3"></textarea>
+  <div id="ts" style="margin-top:14px"></div>
+  <div class="err" id="e2"></div>
+  <button class="go" id="send">ส่งแบบสอบถาม</button>
+</div>
+
+<div class="card hide done" id="s3">
+  <div style="font-size:3rem">🎉</div>
+  <h1>ขอบคุณที่ตอบแบบสอบถาม</h1>
+  <p class="mu">บันทึกข้อมูลเรียบร้อยแล้ว</p>
+</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let CFG = null, role = "", sid = "", planId = "", list = [], REQ = false, FOUND = false, TSID = null;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ID_OK = /^[A-Za-z0-9\-]{3,20}$/;
+async function lookup() {
+  const s = $("sid").value.trim(); FOUND = false; $("plan").disabled = false; $("hint").textContent = "";
+  if (!ID_OK.test(s)) return;
+  try {
+    const j = await (await fetch("/api/lookup?id=" + encodeURIComponent(s))).json();
+    REQ = j.required; FOUND = j.found;
+    if (j.found) {
+      $("hint").textContent = "✓ พบข้อมูล: " + j.name + (j.class ? " ห้อง " + j.class : "");
+      if (j.plan_id) { $("plan").value = j.plan_id; if ($("plan").value === String(j.plan_id)) $("plan").disabled = true; }
+    } else if (j.required) $("hint").textContent = "⚠️ ไม่พบรหัสนี้ในรายชื่อนักเรียน";
+  } catch {}
+}
+$("sid").onblur = lookup;
+
+fetch("/api/config").then(r => r.json()).then(c => {
+  CFG = c;
+  $("ttl").textContent = "📋 " + c.title;
+  $("rnd").textContent = c.round ? "รอบการประเมิน: " + c.round : "";
+  if (c.consent_required) { $("cons").classList.remove("hide"); $("ctext").textContent = c.consent_text; }
+  if (c.turnstile) { const s = document.createElement("script"); s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"; s.async = true; document.head.appendChild(s); }
+  document.title = c.title;
+  c.plans.forEach(p => $("plan").add(new Option(p.name, p.id)));
+  if (c.open) $("start").disabled = false; else $("closed").style.display = "block";
+}).catch(() => $("e1").textContent = "โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า");
+
+document.querySelectorAll(".role").forEach(el => el.onclick = () => {
+  document.querySelectorAll(".role").forEach(x => x.classList.remove("on"));
+  el.classList.add("on"); role = el.dataset.r;
+});
+
+$("start").onclick = async () => {
+  await lookup();
+  sid = $("sid").value.trim(); planId = $("plan").value;
+  if (REQ && !FOUND && ID_OK.test(sid)) return $("e1").textContent = "ไม่พบรหัสนี้ในรายชื่อนักเรียน กรุณาตรวจสอบรหัสอีกครั้ง";
+  if (!/^[A-Za-z0-9\-]{3,20}$/.test(sid)) return $("e1").textContent = "กรุณากรอกรหัสนักเรียนให้ถูกต้อง";
+  if (!planId) return $("e1").textContent = "กรุณาเลือกแผนการเรียน";
+  if (!role) return $("e1").textContent = "กรุณาเลือกนักเรียนหรือผู้ปกครอง";
+  if (CFG.consent_required && !$("cchk").checked) return $("e1").textContent = "กรุณากดยินยอมประกาศความเป็นส่วนตัว";
+  list = CFG.questions.filter(q => (q.plan_id === null || String(q.plan_id) === planId) && (q.role === "both" || q.role === role));
+  if (!list.length) return $("e1").textContent = "ยังไม่มีแบบสอบถามสำหรับแผนนี้";
+  $("e1").textContent = "";
+  $("t2").textContent = role === "student" ? "แบบสอบถาม (นักเรียน)" : "แบบสอบถาม (ผู้ปกครอง)";
+  $("who").textContent = sid; $("pn").textContent = $("plan").selectedOptions[0].text;
+  const cn = id => (CFG.categories.find(x => x.id === id) || {name: ""}).name;
+  const co = id => { const k = CFG.categories.findIndex(x => x.id === id); return k < 0 ? 999 : k; };
+  list.sort((a, b) => co(a.category_id) - co(b.category_id));
+  let lastCat = -1;
+  $("qs").innerHTML = list.map((q, i) => (q.category_id !== lastCat && (lastCat = q.category_id, cn(q.category_id)) ? `<h3 class="ch">${esc(cn(q.category_id))}</h3>` : "") + `
+    <div class="q"><div>${i + 1}. ${q.text.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}</div>
+    <div class="scale">${[1,2,3,4,5].map(n => `<label><input type="radio" name="q${q.id}" value="${n}"><span>${n}</span></label>`).join("")}</div>
+    <div class="legend"><span>น้อยที่สุด</span><span>มากที่สุด</span></div></div>`).join("");
+  $("s1").classList.add("hide"); $("s2").classList.remove("hide"); scrollTo(0, 0);
+  if (CFG.turnstile && window.turnstile && TSID === null) TSID = turnstile.render("#ts", {sitekey: CFG.turnstile});
+};
+
+$("send").onclick = async () => {
+  const answers = {};
+  for (const q of list) {
+    const c = document.querySelector(`input[name=q${q.id}]:checked`);
+    if (!c) return $("e2").textContent = "กรุณาตอบให้ครบทุกข้อ";
+    answers[q.id] = +c.value;
+  }
+  let tok = "";
+  if (CFG.turnstile) { tok = window.turnstile ? turnstile.getResponse(TSID) : ""; if (!tok) return $("e2").textContent = "กรุณายืนยันว่าไม่ใช่โปรแกรมอัตโนมัติ"; }
+  $("e2").textContent = ""; $("send").disabled = true; $("send").textContent = "กำลังส่ง...";
+  try {
+    const r = await fetch("/api/submit", { method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ student_id: sid, plan_id: +planId, role, answers, comment: $("cm").value.trim(), consent: $("cchk").checked, cf_token: tok }) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || "ส่งไม่สำเร็จ");
+    $("s2").classList.add("hide"); $("s3").classList.remove("hide"); scrollTo(0, 0);
+  } catch (e) {
+    if (window.turnstile && TSID !== null) turnstile.reset(TSID);
+    $("e2").textContent = e.message; $("send").disabled = false; $("send").textContent = "ส่งแบบสอบถาม";
+  }
+};
+</script>
+</body>
+</html>
