@@ -5,46 +5,63 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>ระบบจัดการแบบสอบถาม (Admin)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600&family=Prompt:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f4f6fb;--card:#fff;--tx:#1f2937;--mu:#6b7280;--pr:#4f46e5;--bd:#e5e7eb;--ok:#16a34a;--bad:#dc2626}
-@media(prefers-color-scheme:dark){:root{--bg:#111827;--card:#1f2937;--tx:#f3f4f6;--mu:#9ca3af;--bd:#374151}}
+:root{--bg:#F2F6FF;--card:#fff;--tx:#0F1B3D;--mu:#5B6B8C;--pr:#1D4ED8;--onpr:#fff;--bd:#DCE5F7;--navy:#0B2A6F;--sky:#EAF1FF;--ye:#FFC531;--ye-d:#E0A200;--ye2:#FFF4CC;--ok:#15803D;--bad:#C62828;--sh:0 8px 24px rgba(11,42,111,.10)}
+@media(prefers-color-scheme:dark){:root{--bg:#0A1430;--card:#12204A;--tx:#EAF0FF;--mu:#9FB0D6;--pr:#6EA0FF;--onpr:#08132E;--bd:#243567;--navy:#08132E;--sky:#182B5E;--ye2:#3B3410;--ok:#4ADE80;--bad:#FF8A80;--sh:0 8px 24px rgba(0,0,0,.4)}}
 *{box-sizing:border-box}
-body{margin:0;font-family:"Sarabun","Noto Sans Thai",system-ui,sans-serif;background:var(--bg);color:var(--tx);padding:14px}
-.wrap{max-width:1000px;margin:0 auto}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:18px;margin-bottom:14px}
-h1{font-size:1.3rem;margin:0}h2{font-size:1.05rem;margin:0 0 10px}
+body{margin:0;font-family:"Noto Sans Thai","Sarabun","Leelawadee UI",Tahoma,system-ui,sans-serif;background:var(--bg);color:var(--tx);padding:14px;line-height:1.55}
+h1,h2,button,.tag{font-family:"Prompt","Noto Sans Thai","Leelawadee UI",Tahoma,sans-serif}
+:focus-visible{outline:3px solid var(--pr);outline-offset:2px}
+.wrap{max-width:1040px;margin:0 auto}
+.card{background:var(--card);border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:var(--sh)}
+h1{font-size:1.25rem;margin:0}
+h2{font-size:1.05rem;margin:0 0 12px;padding-left:10px;border-left:5px solid var(--ye)}
 .mu{color:var(--mu);font-size:.85rem}
-input,select,textarea{padding:9px;border:1px solid var(--bd);border-radius:8px;font:inherit;background:transparent;color:var(--tx);max-width:100%}
+input,select,textarea{padding:9px 12px;border:2px solid var(--bd);border-radius:10px;font:inherit;background:var(--card);color:var(--tx);max-width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pr)}
+input[type=checkbox]{accent-color:var(--pr)}
 select option{color:#111}
-button{padding:9px 14px;border:0;border-radius:8px;background:var(--pr);color:#fff;font:inherit;font-weight:600;cursor:pointer}
-button.sec{background:transparent;color:var(--tx);border:1px solid var(--bd)}
-button.del{background:var(--bad)}button.sm{padding:4px 9px;font-size:.8rem}
+button{padding:9px 16px;border:0;border-radius:10px;background:var(--pr);color:var(--onpr);font-weight:500;font-size:.95rem;cursor:pointer}
+button:hover{filter:brightness(1.08)}
+button.sec{background:transparent;color:var(--tx);border:2px solid var(--bd)}
+button.del{background:var(--bad);color:#fff}
+button.sm{padding:4px 10px;font-size:.8rem}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
-.tabs button{background:transparent;color:var(--tx);border:1px solid var(--bd)}
-.tabs button.on{background:var(--pr);color:#fff;border-color:var(--pr)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;padding:16px 20px;border-radius:18px;border-bottom:5px solid var(--ye);color:#fff;background:linear-gradient(160deg,var(--navy) 0%,#1D4ED8 150%)}
+.topbar .bar{margin:0}
+.topbar .mu{color:rgba(255,255,255,.82)}
+.topbar select{background:#fff;color:#0F1B3D;border-color:transparent}
+.topbar .sec{color:#fff;border-color:rgba(255,255,255,.4)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
+.tabs button{background:var(--card);color:var(--tx);border:2px solid var(--bd)}
+.tabs button.on{background:var(--ye);border-color:var(--ye);color:#0B2A6F;font-weight:600}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.stat{border:1px solid var(--bd);border-radius:10px;padding:12px}
-.stat b{display:block;font-size:1.6rem}
+.stat{border:1px solid var(--bd);border-left:5px solid var(--ye);border-radius:12px;padding:12px;background:var(--card)}
+.stat b{display:block;font-family:"Prompt",sans-serif;font-size:1.6rem;color:var(--pr)}
 table{width:100%;border-collapse:collapse;font-size:.9rem}
-th,td{text-align:left;padding:8px;border-bottom:1px solid var(--bd);vertical-align:top}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--bd);vertical-align:top}
+th{background:var(--sky);font-weight:600;font-size:.85rem}
 .wide{overflow-x:auto}
 .dist{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--bd);min-width:120px}
-.tag{font-size:.75rem;padding:2px 7px;border-radius:99px;border:1px solid var(--bd)}
-.cm{border-left:3px solid var(--pr);padding:4px 10px;margin:8px 0}
+.tag{font-size:.75rem;padding:2px 9px;border-radius:99px;background:var(--sky);border:1px solid var(--bd)}
+.cm{border-left:4px solid var(--ye);background:var(--sky);border-radius:0 10px 10px 0;padding:6px 12px;margin:8px 0}
 .hide{display:none}.err{color:var(--bad)}
+.col{display:flex;gap:4px;align-items:end;height:80px}
+.col div{flex:1;background:var(--pr);border-radius:4px 4px 0 0;position:relative;min-height:2px}
+.col span{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:.7rem}
 .print-only{display:none}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 @media print{
-:root{--bg:#fff;--card:#fff;--tx:#000;--mu:#444;--bd:#ccc}
+:root{--bg:#fff;--card:#fff;--tx:#000;--mu:#444;--bd:#ccc;--sky:#f3f3f3}
 body{padding:0}
-.bar,.tabs,#login{display:none!important}
+.bar,.tabs,.topbar,#login{display:none!important}
 .print-only{display:block;margin-bottom:10px}
-.card{break-inside:avoid}
+.card{break-inside:avoid;box-shadow:none;border:1px solid #ccc}
 *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
-.col{display:flex;gap:4px;align-items:end;height:80px}
-.col div{flex:1;background:var(--pr);border-radius:3px 3px 0 0;position:relative;min-height:2px}
-.col span{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:.7rem}
 </style>
 </head>
 <body>
@@ -58,7 +75,7 @@ body{padding:0}
 </div>
 
 <div id="app" class="hide">
-  <div class="bar" style="justify-content:space-between"><h1>⚙️ ระบบจัดการแบบสอบถาม</h1><div class="bar" style="margin:0"><span class="mu">รอบการประเมิน</span><select id="rid"></select><button class="sec" id="out">ออกจากระบบ</button></div></div>
+  <div class="topbar"><h1>⚙️ ระบบจัดการแบบสอบถาม</h1><div class="bar" style="margin:0"><span class="mu">รอบการประเมิน</span><select id="rid"></select><button class="sec" id="out">ออกจากระบบ</button></div></div>
   <div class="tabs" id="tabs">
     <button data-t="sum" class="on">📊 สรุปผล</button><button data-t="round">🗓️ รอบการประเมิน</button><button data-t="plan">🏫 แผนการเรียน</button>
     <button data-t="q">📝 คำถาม</button><button data-t="stu">👩‍🎓 รายชื่อนักเรียน</button><button data-t="data">🗂️ ข้อมูลผู้ตอบ</button><button data-t="set">⚙️ ตั้งค่า</button>
@@ -116,6 +133,7 @@ body{padding:0}
   <section id="t-stu" class="hide">
     <div class="card"><h2>นำเข้ารายชื่อนักเรียนจากไฟล์ CSV</h2>
       <p class="mu">คอลัมน์: <b>รหัสนักเรียน, ชื่อ-สกุล, ห้อง, แผนการเรียน</b> · ชื่อแผนต้องตรงกับที่สร้างไว้ (เว้นว่างได้ = ให้นักเรียนเลือกเอง) · รหัสซ้ำจะถูกอัปเดตทับ · รองรับไฟล์ UTF-8 และ CSV จาก Excel ภาษาไทย</p>
+      <div class="bar"><label><input type="checkbox" id="screate" checked> สร้างสาย/แผนการเรียนใหม่อัตโนมัติ ถ้ายังไม่มีในระบบ</label></div>
       <div class="bar"><input type="file" id="sfile" accept=".csv,.txt"><button class="sec" id="stpl">⬇️ ดาวน์โหลดไฟล์ตัวอย่าง</button></div>
       <div id="sprev"></div></div>
     <div class="card"><h2>เพิ่มทีละคน</h2><div class="bar">
@@ -297,7 +315,7 @@ function parseCSV(t) {
   if (f !== "" || r.length) { r.push(f); rows.push(r); }
   return rows.filter(x => x.some(v => v.trim() !== ""));
 }
-$("#stpl").onclick = () => dl("students-template.csv", ["รหัสนักเรียน,ชื่อ-สกุล,ห้อง,แผนการเรียน",
+$("#stpl").onclick = () => dl("students-template.csv", ["รหัสนักเรียน,ชื่อ-สกุล,ห้อง,สาย/แผนการเรียน",
   [12345, "สมชาย ใจดี", "ม.4/1", PLANS[0] ? PLANS[0].name : "วิทย์-คณิต"].map(csvc).join(","),
   [12346, "สมหญิง รักเรียน", "ม.4/2", PLANS[1] ? PLANS[1].name : "ศิลป์-ภาษา"].map(csvc).join(",")].join("\n") + "\n");
 $("#sfile").onchange = async e => {
@@ -315,7 +333,7 @@ $("#sfile").onchange = async e => {
 async function doImport() {
   $("#sgo").disabled = true; $("#sgo").textContent = "กำลังนำเข้า..."; let saved = 0; const errs = [];
   for (let i = 0; i < IMP.length; i += 200) {
-    try { const j = await post({action: "students_import", rows: IMP.slice(i, i + 200)}); saved += j.saved; errs.push(...j.errors); }
+    try { const j = await post({action: "students_import", create_plans: $("#screate").checked, rows: IMP.slice(i, i + 200)}); saved += j.saved; errs.push(...j.errors); }
     catch (e) { errs.push("ผิดพลาด: " + e.message); break; }
   }
   $("#sgo").textContent = "เสร็จสิ้น";
