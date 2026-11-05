@@ -4,147 +4,252 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>แบบสอบถามความพึงพอใจในการเรียน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600&family=Prompt:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f4f6fb;--card:#fff;--tx:#1f2937;--mu:#6b7280;--pr:#4f46e5;--bd:#e5e7eb}
-@media(prefers-color-scheme:dark){:root{--bg:#111827;--card:#1f2937;--tx:#f3f4f6;--mu:#9ca3af;--bd:#374151}}
+:root{
+  --bg:#F2F6FF;--card:#fff;--tx:#0F1B3D;--mu:#5B6B8C;--pr:#1D4ED8;--onpr:#fff;--bd:#DCE5F7;
+  --navy:#0B2A6F;--sky:#EAF1FF;--ye:#FFC531;--ye-d:#E0A200;--ye2:#FFF4CC;--bad:#C62828;
+  --sh:0 12px 32px rgba(11,42,111,.14);
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#0A1430;--card:#12204A;--tx:#EAF0FF;--mu:#9FB0D6;--pr:#6EA0FF;--onpr:#08132E;--bd:#243567;
+  --navy:#08132E;--sky:#182B5E;--ye2:#3B3410;--bad:#FF8A80;--sh:0 12px 32px rgba(0,0,0,.4);
+}}
 *{box-sizing:border-box}
-body{margin:0;font-family:"Sarabun","Noto Sans Thai",system-ui,sans-serif;background:var(--bg);color:var(--tx);padding:16px}
-.wrap{max-width:720px;margin:0 auto}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:22px;margin-bottom:16px}
-h1{font-size:1.4rem;margin:0 0 6px}
-.mu{color:var(--mu);font-size:.9rem}
-label.f{display:block;font-weight:600;margin:14px 0 6px}
-input[type=text],select,textarea{width:100%;padding:12px;border:1px solid var(--bd);border-radius:10px;font:inherit;background:transparent;color:var(--tx)}
+body{margin:0;font-family:"Noto Sans Thai","Sarabun","Leelawadee UI",Tahoma,system-ui,sans-serif;background:var(--bg);color:var(--tx);line-height:1.65}
+h1,h2,h3,button,.role,.chip{font-family:"Prompt","Noto Sans Thai","Leelawadee UI",Tahoma,sans-serif}
+:focus-visible{outline:3px solid var(--pr);outline-offset:2px}
+.hide{display:none!important}
+
+/* หัวหน้าเว็บ */
+.hero{position:relative;overflow:hidden;color:#fff;background:linear-gradient(160deg,var(--navy) 0%,#1D4ED8 140%);padding:30px 20px 78px;border-radius:0 0 34px 34px}
+.hero::after{content:"";position:absolute;right:-46px;top:-56px;width:176px;height:176px;border-radius:50%;background:var(--ye)}
+.hero::before{content:"";position:absolute;right:70px;bottom:-70px;width:130px;height:130px;border-radius:50%;border:15px solid rgba(255,255,255,.13)}
+.hero .in{position:relative;z-index:1;max-width:640px;margin:0 auto}
+.logo{width:46px;height:46px;border-radius:15px;background:var(--ye);display:grid;place-items:center;font-size:1.45rem;margin-bottom:14px;box-shadow:0 4px 0 var(--ye-d)}
+.hero h1{margin:0 0 8px;font-size:clamp(1.45rem,5.4vw,2rem);line-height:1.3;font-weight:700;max-width:80%}
+.pill{display:inline-block;background:rgba(255,255,255,.16);border-radius:99px;padding:3px 14px;font-size:.88rem}
+
+.wrap{max-width:640px;margin:0 auto;padding:0 16px 48px}
+.card{background:var(--card);border-radius:22px;padding:22px;box-shadow:var(--sh);margin-bottom:16px}
+#s1{margin-top:-52px;position:relative}
+#s3{margin-top:32px}
+label.f{display:block;font-weight:600;margin:0 0 6px}
+.mu{color:var(--mu);font-size:.92rem}
+input[type=text],select,textarea{width:100%;padding:14px 16px;border:2px solid var(--bd);border-radius:14px;font:inherit;background:var(--card);color:var(--tx)}
+input[type=text]:focus,select:focus,textarea:focus{outline:none;border-color:var(--pr);box-shadow:0 0 0 4px rgba(29,78,216,.15)}
+#sid{font-size:1.2rem;letter-spacing:.03em}
 select option{color:#111}
-.roles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.role{border:2px solid var(--bd);border-radius:12px;padding:14px;text-align:center;cursor:pointer;font-weight:600}
-.role.on{border-color:var(--pr);background:rgba(79,70,229,.1)}
-button.go{width:100%;margin-top:18px;padding:13px;border:0;border-radius:10px;background:var(--pr);color:#fff;font-size:1rem;font-weight:700;cursor:pointer}
-button.go:disabled{opacity:.5}
-.q{padding:14px 0;border-bottom:1px solid var(--bd)}
-.scale{display:flex;gap:6px;margin-top:8px}
-.scale label{flex:1;text-align:center}
-.scale input{display:none}
-.scale span{display:block;padding:10px 0;border:1px solid var(--bd);border-radius:8px;cursor:pointer}
-.scale input:checked+span{background:var(--pr);color:#fff;border-color:var(--pr)}
-.legend{display:flex;justify-content:space-between;font-size:.75rem;color:var(--mu);margin-top:4px}
-.err{color:#dc2626;margin-top:10px;font-size:.9rem}
-.hide{display:none}
-.ch{margin:20px 0 0;font-size:1.05rem;color:var(--pr)}
-.done{text-align:center;padding:30px 10px}
+input[type=checkbox]{accent-color:var(--pr);width:18px;height:18px}
+
+button.go{display:block;width:100%;padding:14px 18px;border:0;border-radius:14px;background:var(--ye);color:#0B2A6F;font-size:1.05rem;font-weight:600;cursor:pointer;box-shadow:0 4px 0 var(--ye-d);transition:transform .08s,box-shadow .08s}
+button.go:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ye-d)}
+button.go:disabled{opacity:.55;cursor:not-allowed}
+button.go.sm{width:auto;padding:0 26px}
+.row{display:flex;gap:10px;align-items:stretch}
+.row input{flex:1;min-width:0}
+.manual{margin-top:18px;padding-top:16px;border-top:2px dashed var(--bd)}
+.manual button{margin-top:14px}
+.notice{background:var(--ye2);border:1px solid var(--ye);border-radius:12px;padding:10px 14px;margin:0 0 16px;font-weight:500}
+.err{color:var(--bad);margin-top:10px;font-size:.92rem;font-weight:500}
+
+/* แถบบนตอนทำแบบสอบถาม */
+.stick{position:sticky;top:0;z-index:10;margin:0 -16px 16px;padding:12px 18px 12px;background:var(--navy);color:#fff;border-radius:0 0 20px 20px;box-shadow:0 8px 20px rgba(11,42,111,.28)}
+.srow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#wname{font-family:"Prompt",sans-serif;font-weight:600;font-size:1.05rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ghost{background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:99px;padding:5px 14px;font-size:.85rem;cursor:pointer;white-space:nowrap}
+.prog{height:8px;border-radius:99px;background:rgba(255,255,255,.2);overflow:hidden;margin-top:10px}
+#bar{height:100%;width:0;border-radius:99px;background:var(--ye);transition:width .25s}
+#ptxt{font-size:.82rem;margin-top:5px;opacity:.92}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.chip{background:var(--sky);border-radius:99px;padding:3px 13px;font-size:.85rem;font-weight:500}
+.chip.y{background:var(--ye2);box-shadow:inset 0 0 0 1.5px var(--ye)}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;background:var(--sky);border-radius:16px;margin-bottom:18px}
+.role{border-radius:12px;padding:11px 8px;text-align:center;cursor:pointer;font-weight:500;color:var(--mu);transition:background .15s}
+.role.on{background:var(--pr);color:var(--onpr);box-shadow:0 3px 0 var(--ye)}
+#t2{font-size:1.2rem;margin:0 0 4px}
+
+.ch{margin:24px 0 0;padding-left:11px;border-left:5px solid var(--ye);font-size:1.05rem}
+.q{padding:18px 0;border-bottom:1px solid var(--bd);scroll-margin-top:120px}
+.q:last-child{border-bottom:0}
+.q .n{color:var(--pr);font-weight:700;margin-right:6px}
+.q.miss{background:var(--ye2);box-shadow:0 0 0 2px var(--ye);padding-left:10px;padding-right:10px;border-radius:12px;border-bottom-color:transparent}
+.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
+.scale label{position:relative;display:block}
+.scale input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.scale span{display:grid;place-items:center;height:52px;border:2px solid var(--bd);border-radius:14px;background:var(--card);font-family:"Prompt",sans-serif;font-weight:600;font-size:1.1rem;transition:background .12s,border-color .12s}
+.scale input:checked+span{background:var(--pr);border-color:var(--pr);color:var(--onpr);box-shadow:0 0 0 3px var(--ye)}
+.scale input:focus-visible+span{outline:3px solid var(--tx);outline-offset:2px}
+@media(hover:hover){.scale label:hover span{border-color:var(--pr)}}
+.legend{display:flex;justify-content:space-between;color:var(--mu);font-size:.8rem;margin-top:5px}
+#cons{margin-top:18px;border:2px solid var(--bd);border-radius:14px;padding:14px;background:var(--sky)}
+#qwrap .go{margin-top:20px}
+
+.done{text-align:center;padding:34px 22px}
+.okc{width:86px;height:86px;margin:4px auto 20px;border-radius:50%;background:var(--pr);color:var(--onpr);display:grid;place-items:center;font-size:2.5rem;box-shadow:0 0 0 9px var(--ye)}
+#s3:not(.hide) .okc{animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.5);opacity:0}to{transform:none;opacity:1}}
+.done h1{font-size:1.4rem;margin:0 0 6px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
+
+<header class="hero" id="hero"><div class="in">
+  <div class="logo">🎓</div>
+  <h1 id="ttl">แบบสอบถามความพึงพอใจในการเรียน</h1>
+  <span class="pill" id="rnd" style="display:none"></span>
+</div></header>
+
 <div class="wrap">
 
+<!-- ขั้นที่ 1: ค้นหารหัส -->
 <div class="card" id="s1">
-  <h1 id="ttl">📋 แบบสอบถามความพึงพอใจในการเรียน</h1>
-  <p class="mu" id="rnd"></p>
-  <p class="mu" id="closed" style="display:none;color:#dc2626">ขณะนี้ปิดรับแบบสอบถาม</p>
+  <div class="notice" id="closed" style="display:none">ขณะนี้ปิดรับแบบสอบถาม</div>
   <label class="f" for="sid">รหัสนักเรียน</label>
-  <div style="display:flex;gap:8px">
-    <input type="text" id="sid" inputmode="numeric" placeholder="เช่น 12345" maxlength="20" autocomplete="off" style="flex:1">
-    <button class="go" id="search" style="width:auto;margin:0;padding:0 22px" disabled>🔍 ค้นหา</button>
+  <div class="mu" style="margin-bottom:10px">กรอกรหัสแล้วกดค้นหา ระบบจะแสดงชื่อและแบบสอบถามของสายการเรียนของคุณ</div>
+  <div class="row">
+    <input type="text" id="sid" inputmode="numeric" placeholder="เช่น 12345" maxlength="20" autocomplete="off">
+    <button class="go sm" id="search" disabled>ค้นหา</button>
   </div>
-  <div id="found" class="hide">
-    <div id="hint" style="margin:12px 0 0;color:#16a34a;font-weight:600"></div>
-    <div id="planbox" class="hide">
-      <label class="f" for="plan">แผนการเรียน</label>
-      <select id="plan"><option value="">— เลือกแผนการเรียน —</option></select>
-    </div>
-    <div id="cons" class="hide" style="margin-top:16px;border:1px solid var(--bd);border-radius:10px;padding:12px">
-      <b>🔒 ประกาศความเป็นส่วนตัว</b>
-      <div class="mu" id="ctext" style="white-space:pre-wrap;margin:6px 0"></div>
-      <label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="cchk" style="margin-top:4px"><span>ข้าพเจ้าได้อ่านและยินยอมให้เก็บและใช้ข้อมูลตามประกาศนี้</span></label>
-    </div>
-    <label class="f">เลือกทำแบบสอบถามในฐานะ</label>
-    <div class="roles">
-      <div class="role" data-r="student">🎒 นักเรียน</div>
-      <div class="role" data-r="parent">👨‍👩‍👧 ผู้ปกครอง</div>
-    </div>
+  <div id="manual" class="manual hide">
+    <div class="mu" id="mmsg"></div>
+    <label class="f" for="mplan" style="margin-top:12px">สายการเรียน</label>
+    <select id="mplan"><option value="">เลือกสาย</option></select>
+    <button class="go" id="manualgo">ไปที่แบบสอบถาม</button>
   </div>
   <div class="err" id="e1"></div>
 </div>
 
-<div class="card hide" id="s2">
-  <h1 id="t2"></h1>
-  <p class="mu">รหัส: <b id="who"></b> · แผน: <b id="pn"></b><br>ให้คะแนน 1 (น้อยที่สุด) ถึง 5 (มากที่สุด)</p>
-  <div id="qs"></div>
-  <label class="f">ข้อเสนอแนะเพิ่มเติม</label>
-  <textarea id="cm" maxlength="500" rows="3"></textarea>
-  <div id="ts" style="margin-top:14px"></div>
-  <div class="err" id="e2"></div>
-  <button class="go" id="send">ส่งแบบสอบถาม</button>
+<!-- ขั้นที่ 2: แบบสอบถามของสายนั้น -->
+<div id="s2" class="hide">
+  <div class="stick">
+    <div class="srow"><span id="wname"></span><button class="ghost" id="back">ค้นหารหัสอื่น</button></div>
+    <div class="prog"><div id="bar"></div></div>
+    <div id="ptxt"></div>
+  </div>
+  <div class="card">
+    <div class="chips" id="chips"></div>
+    <div class="roles" id="rolebar">
+      <div class="role" data-r="student">🎒 นักเรียนตอบ</div>
+      <div class="role" data-r="parent">👨‍👩‍👧 ผู้ปกครองตอบ</div>
+    </div>
+    <h2 id="t2"></h2>
+    <div class="notice" id="already" style="display:none"></div>
+    <div id="qwrap">
+      <p class="mu" style="margin:0">ให้คะแนน 1 (น้อยที่สุด) ถึง 5 (มากที่สุด)</p>
+      <div id="qs"></div>
+      <label class="f" for="cm" style="margin-top:22px">ข้อเสนอแนะเพิ่มเติม</label>
+      <textarea id="cm" maxlength="500" rows="3" placeholder="พิมพ์ข้อเสนอแนะ (ไม่บังคับ)"></textarea>
+      <div id="cons" class="hide">
+        <b>ประกาศความเป็นส่วนตัว</b>
+        <div class="mu" id="ctext" style="white-space:pre-wrap;margin:6px 0 10px"></div>
+        <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer"><input type="checkbox" id="cchk" style="margin-top:4px;flex:none"><span>ข้าพเจ้าได้อ่านและยินยอมให้เก็บและใช้ข้อมูลตามประกาศนี้</span></label>
+      </div>
+      <div id="ts" style="margin-top:14px"></div>
+      <div class="err" id="e2"></div>
+      <button class="go" id="send">ส่งแบบสอบถาม</button>
+    </div>
+  </div>
 </div>
 
 <div class="card hide done" id="s3">
-  <div style="font-size:3rem">🎉</div>
+  <div class="okc">✓</div>
   <h1>ขอบคุณที่ตอบแบบสอบถาม</h1>
-  <p class="mu">บันทึกข้อมูลเรียบร้อยแล้ว</p>
+  <p class="mu" style="margin:0 0 20px">บันทึกคำตอบของคุณเรียบร้อยแล้ว</p>
+  <button class="go" onclick="location.reload()">กลับหน้าแรก</button>
 </div>
 </div>
 
 <script>
 const $ = id => document.getElementById(id);
-let CFG = null, role = "", sid = "", planId = "", list = [], REQ = false, FOUND = false, TSID = null;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const ID_OK = /^[A-Za-z0-9\-]{3,20}$/;
+let CFG = null, S = null, role = "student", list = [], TSID = null;
+const planName = id => (CFG.plans.find(p => p.id === id) || {}).name || "";
+
+fetch("/api/config").then(r => r.json()).then(c => {
+  CFG = c;
+  $("ttl").textContent = c.title; document.title = c.title;
+  if (c.round) { $("rnd").textContent = "รอบการประเมิน: " + c.round; $("rnd").style.display = "inline-block"; }
+  if (c.consent_required) { $("cons").classList.remove("hide"); $("ctext").textContent = c.consent_text; }
+  if (c.turnstile) { const s = document.createElement("script"); s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"; s.async = true; document.head.appendChild(s); }
+  c.plans.forEach(p => $("mplan").add(new Option(p.name, p.id)));
+  if (c.open) $("search").disabled = false; else $("closed").style.display = "block";
+}).catch(() => $("e1").textContent = "โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า");
+
+/* ---------- ค้นหารหัส ---------- */
 async function search() {
-  $("e1").textContent = ""; $("found").classList.add("hide");
-  sid = $("sid").value.trim();
+  $("e1").textContent = ""; $("manual").classList.add("hide");
+  const sid = $("sid").value.trim();
   if (!ID_OK.test(sid)) return $("e1").textContent = "กรุณากรอกรหัสนักเรียนให้ถูกต้อง";
   $("search").disabled = true;
   try {
     const j = await (await fetch("/api/lookup?id=" + encodeURIComponent(sid))).json();
-    REQ = j.required; FOUND = j.found;
-    if (!j.found && j.required) return $("e1").textContent = "ไม่พบรหัสนี้ในรายชื่อนักเรียน กรุณาตรวจสอบรหัสอีกครั้ง";
-    let lock = !!(j.found && j.plan_id);
-    $("plan").value = lock ? j.plan_id : "";
-    if (lock && $("plan").value !== String(j.plan_id)) lock = false;
-    $("planbox").classList.toggle("hide", lock);
-    $("hint").textContent = j.found
-      ? "✓ พบข้อมูล: " + j.name + (j.class ? " ห้อง " + j.class : "") + (lock ? " · แผน " + $("plan").selectedOptions[0].text : "")
-      : "ไม่พบรหัสนี้ในรายชื่อ — กรุณาเลือกแผนการเรียนของท่านเอง";
-    $("hint").style.color = j.found ? "#16a34a" : "var(--mu)";
-    $("found").classList.remove("hide");
+    if (!j.found && j.required) return $("e1").textContent = "ไม่พบรหัสนี้ในระบบ กรุณาตรวจสอบรหัสหรือติดต่อครู";
+    S = { sid, name: j.found ? j.name : "", cls: j.found ? j.class : "", planId: j.found && planName(j.plan_id) ? j.plan_id : null, done: j.done || {} };
+    if (S.planId) return openQ();
+    $("mmsg").textContent = j.found ? "พบรหัสในระบบ แต่ยังไม่ได้กำหนดสาย กรุณาเลือกสายของคุณ" : "ไม่พบรหัสนี้ในรายชื่อ กรุณาเลือกสายของคุณเอง";
+    $("manual").classList.remove("hide");
   } catch { $("e1").textContent = "เชื่อมต่อไม่สำเร็จ กรุณาลองใหม่"; }
   finally { $("search").disabled = !(CFG && CFG.open); }
 }
 $("search").onclick = search;
 $("sid").onkeydown = e => { if (e.key === "Enter") search(); };
-$("sid").oninput = () => { $("found").classList.add("hide"); $("e1").textContent = ""; };
+$("sid").oninput = () => { $("manual").classList.add("hide"); $("e1").textContent = ""; };
+$("manualgo").onclick = () => {
+  const v = $("mplan").value; if (!v) return $("e1").textContent = "กรุณาเลือกสาย";
+  S.planId = Number(v); $("e1").textContent = ""; openQ();
+};
+$("back").onclick = () => {
+  $("s2").classList.add("hide"); $("s1").classList.remove("hide"); $("hero").classList.remove("hide");
+  $("sid").value = ""; $("manual").classList.add("hide"); S = null; scrollTo(0, 0);
+};
 
-fetch("/api/config").then(r => r.json()).then(c => {
-  CFG = c;
-  $("ttl").textContent = "📋 " + c.title;
-  $("rnd").textContent = c.round ? "รอบการประเมิน: " + c.round : "";
-  if (c.consent_required) { $("cons").classList.remove("hide"); $("ctext").textContent = c.consent_text; }
-  if (c.turnstile) { const s = document.createElement("script"); s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"; s.async = true; document.head.appendChild(s); }
-  document.title = c.title;
-  c.plans.forEach(p => $("plan").add(new Option(p.name, p.id)));
-  if (c.open) $("search").disabled = false; else $("closed").style.display = "block";
-}).catch(() => $("e1").textContent = "โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า");
+/* ---------- แบบสอบถาม ---------- */
+function openQ() {
+  role = S.done.student && !S.done.parent ? "parent" : "student";
+  $("wname").textContent = S.name || "รหัส " + S.sid;
+  $("chips").innerHTML = "";
+  [["รหัส " + S.sid, ""], ...(S.cls ? [["ห้อง " + S.cls, ""]] : []), ["สาย " + planName(S.planId), "y"]].forEach(([t, c]) => {
+    const e = document.createElement("span"); e.className = "chip " + c; e.textContent = t; $("chips").appendChild(e);
+  });
+  $("hero").classList.add("hide"); $("s1").classList.add("hide"); $("s2").classList.remove("hide"); scrollTo(0, 0);
+  renderQs();
+}
+document.querySelectorAll("#rolebar .role").forEach(el => el.onclick = () => { role = el.dataset.r; renderQs(); });
 
-document.querySelectorAll(".role").forEach(el => el.onclick = () => { role = el.dataset.r; begin(); });
+function prog() {
+  const n = list.filter(q => document.querySelector(`input[name=q${q.id}]:checked`)).length;
+  $("ptxt").textContent = list.length ? `ตอบแล้ว ${n} จาก ${list.length} ข้อ` : "";
+  $("bar").style.width = (list.length ? n / list.length * 100 : 0) + "%";
+}
+$("qs").addEventListener("change", e => { const q = e.target.closest(".q"); if (q) q.classList.remove("miss"); prog(); });
 
-function begin() {
-  sid = $("sid").value.trim(); planId = $("plan").value;
-  if (!planId) return $("e1").textContent = "กรุณาเลือกแผนการเรียน";
-  if (CFG.consent_required && !$("cchk").checked) return $("e1").textContent = "กรุณากดยินยอมประกาศความเป็นส่วนตัว";
-  list = CFG.questions.filter(q => (q.plan_id === null || String(q.plan_id) === planId) && (q.role === "both" || q.role === role));
-  if (!list.length) return $("e1").textContent = "ยังไม่มีแบบสอบถามสำหรับแผนนี้";
-  $("e1").textContent = "";
-  $("t2").textContent = role === "student" ? "แบบสอบถาม (นักเรียน)" : "แบบสอบถาม (ผู้ปกครอง)";
-  $("who").textContent = sid; $("pn").textContent = $("plan").selectedOptions[0].text;
+function renderQs() {
+  document.querySelectorAll("#rolebar .role").forEach(x => x.classList.toggle("on", x.dataset.r === role));
+  const R = role === "student" ? "นักเรียน" : "ผู้ปกครอง";
+  $("t2").textContent = "แบบสอบถาม (" + R + ")"; $("e2").textContent = "";
+  if (S.done[role]) {
+    list = []; prog();
+    $("qwrap").classList.add("hide"); $("already").style.display = "block";
+    $("already").textContent = "รหัสนี้ได้ตอบแบบสอบถามในฐานะ" + R + "ในรอบนี้แล้ว ขอบคุณครับ/ค่ะ"; return;
+  }
+  $("already").style.display = "none"; $("qwrap").classList.remove("hide");
+  list = CFG.questions.filter(q => (q.plan_id === null || q.plan_id === S.planId) && (q.role === "both" || q.role === role));
   const cn = id => (CFG.categories.find(x => x.id === id) || {name: ""}).name;
   const co = id => { const k = CFG.categories.findIndex(x => x.id === id); return k < 0 ? 999 : k; };
   list.sort((a, b) => co(a.category_id) - co(b.category_id));
   let lastCat = -1;
-  $("qs").innerHTML = list.map((q, i) => (q.category_id !== lastCat && (lastCat = q.category_id, cn(q.category_id)) ? `<h3 class="ch">${esc(cn(q.category_id))}</h3>` : "") + `
-    <div class="q"><div>${i + 1}. ${q.text.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}</div>
-    <div class="scale">${[1,2,3,4,5].map(n => `<label><input type="radio" name="q${q.id}" value="${n}"><span>${n}</span></label>`).join("")}</div>
-    <div class="legend"><span>น้อยที่สุด</span><span>มากที่สุด</span></div></div>`).join("");
-  $("s1").classList.add("hide"); $("s2").classList.remove("hide"); scrollTo(0, 0);
+  $("qs").innerHTML = list.length ? list.map((q, i) => (q.category_id !== lastCat && (lastCat = q.category_id, cn(q.category_id)) ? `<h3 class="ch">${esc(cn(q.category_id))}</h3>` : "") + `
+    <div class="q" id="qq${q.id}"><div><span class="n">${i + 1}.</span>${esc(q.text)}</div>
+    <div class="scale">${[1,2,3,4,5].map(n => `<label><input type="radio" name="q${q.id}" value="${n}" aria-label="${n}"><span>${n}</span></label>`).join("")}</div>
+    <div class="legend"><span>น้อยที่สุด</span><span>มากที่สุด</span></div></div>`).join("") : `<p class="mu">ยังไม่มีแบบสอบถามสำหรับสายนี้</p>`;
+  $("send").classList.toggle("hide", !list.length);
+  prog();
   if (CFG.turnstile && window.turnstile && TSID === null) TSID = turnstile.render("#ts", {sitekey: CFG.turnstile});
 }
 
@@ -152,22 +257,26 @@ $("send").onclick = async () => {
   const answers = {};
   for (const q of list) {
     const c = document.querySelector(`input[name=q${q.id}]:checked`);
-    if (!c) return $("e2").textContent = "กรุณาตอบให้ครบทุกข้อ";
+    if (!c) {
+      const el = $("qq" + q.id); el.classList.add("miss"); el.scrollIntoView({behavior: "smooth", block: "center"});
+      return $("e2").textContent = "กรุณาตอบให้ครบทุกข้อ (ข้อที่ยังไม่ได้ตอบไฮไลต์เป็นสีเหลือง)";
+    }
     answers[q.id] = +c.value;
   }
+  if (CFG.consent_required && !$("cchk").checked) return $("e2").textContent = "กรุณากดยินยอมประกาศความเป็นส่วนตัว";
   let tok = "";
   if (CFG.turnstile) { tok = window.turnstile ? turnstile.getResponse(TSID) : ""; if (!tok) return $("e2").textContent = "กรุณายืนยันว่าไม่ใช่โปรแกรมอัตโนมัติ"; }
   $("e2").textContent = ""; $("send").disabled = true; $("send").textContent = "กำลังส่ง...";
   try {
     const r = await fetch("/api/submit", { method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ student_id: sid, plan_id: +planId, role, answers, comment: $("cm").value.trim(), consent: $("cchk").checked, cf_token: tok }) });
+      body: JSON.stringify({ student_id: S.sid, plan_id: S.planId, role, answers, comment: $("cm").value.trim(), consent: $("cchk").checked, cf_token: tok }) });
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || "ส่งไม่สำเร็จ");
     $("s2").classList.add("hide"); $("s3").classList.remove("hide"); scrollTo(0, 0);
   } catch (e) {
     if (window.turnstile && TSID !== null) turnstile.reset(TSID);
-    $("e2").textContent = e.message; $("send").disabled = false; $("send").textContent = "ส่งแบบสอบถาม";
-  }
+    $("e2").textContent = e.message;
+  } finally { $("send").disabled = false; $("send").textContent = "ส่งแบบสอบถาม"; }
 };
 </script>
 </body>
