@@ -19,7 +19,7 @@ CREATE TABLE questions (
   sort INTEGER DEFAULT 0,
   active INTEGER DEFAULT 1
 );
-CREATE TABLE students (student_id TEXT PRIMARY KEY, name TEXT, class TEXT, plan_id INTEGER);
+CREATE TABLE students (student_id TEXT PRIMARY KEY, name TEXT, class TEXT, plan_id INTEGER, prefix TEXT, first_name TEXT, last_name TEXT, grade TEXT, room TEXT, seq INTEGER);
 CREATE TABLE responses (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   round_id INTEGER NOT NULL,

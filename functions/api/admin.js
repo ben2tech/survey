@@ -25,10 +25,10 @@ export async function onRequestGet({ request, env }) {
   if (act === "categories") return json({ categories: (await DB.prepare("SELECT * FROM categories ORDER BY sort,id").all()).results });
   if (act === "questions") return json({ questions: (await DB.prepare("SELECT * FROM questions ORDER BY plan_id IS NOT NULL, plan_id, role, sort, id").all()).results });
   if (act === "students") {
-    const r = await DB.prepare("SELECT s.student_id,s.name,s.class,s.plan_id,p.name plan_name," +
+    const r = await DB.prepare("SELECT s.student_id,s.name,s.class,s.plan_id,s.prefix,s.first_name,s.last_name,s.grade,s.room,s.seq,p.name plan_name," +
       "EXISTS(SELECT 1 FROM responses r WHERE r.student_id=s.student_id AND r.role='student' AND r.round_id=?) sd," +
       "EXISTS(SELECT 1 FROM responses r WHERE r.student_id=s.student_id AND r.role='parent' AND r.round_id=?) pd " +
-      "FROM students s LEFT JOIN plans p ON p.id=s.plan_id ORDER BY s.class, s.student_id").bind(rid, rid).all();
+      "FROM students s LEFT JOIN plans p ON p.id=s.plan_id ORDER BY CAST(s.grade AS INTEGER), CAST(s.room AS INTEGER), s.seq, s.student_id").bind(rid, rid).all();
     return json({ students: r.results });
   }
   if (act === "settings") {
@@ -151,26 +151,46 @@ export async function onRequestPost({ request, env }) {
       return json({ ok: true });
     }
     case "setting_save": {
-      if (!["survey_open", "require_roster", "title", "current_round", "consent_required", "consent_text"].includes(b.key)) return json({ error: "bad key" }, 400);
+      if (!["survey_open", "require_roster", "title", "school_name", "current_round", "consent_required", "consent_text"].includes(b.key)) return json({ error: "bad key" }, 400);
       if (b.key === "current_round" && !(await DB.prepare("SELECT id FROM rounds WHERE id=?").bind(Number(b.value)).first())) return json({ error: "ไม่พบรอบนี้" }, 400);
       await DB.prepare("INSERT OR REPLACE INTO settings (key,value) VALUES (?,?)").bind(b.key, String(b.value).slice(0, b.key === "consent_text" ? 2000 : 120)).run();
       return json({ ok: true });
     }
     case "students_import": {
-      const rows = Array.isArray(b.rows) ? b.rows.slice(0, 300) : [];
+      const rows = Array.isArray(b.rows) ? b.rows.slice(0, 150) : [];
+      const norm = v => String(v == null ? "" : v).trim();
       const pm = {};
-      (await DB.prepare("SELECT id,name FROM plans").all()).results.forEach(p => pm[p.name.trim().toLowerCase()] = p.id);
-      const stmts = [], errors = [];
+      const loadPlans = async () => { (await DB.prepare("SELECT id,name FROM plans").all()).results.forEach(p => { pm[p.name.trim().toLowerCase()] = p.id; }); };
+      await loadPlans();
+      if (b.create_plans) {   // สร้างสาย/แผนที่ยังไม่มีในระบบอัตโนมัติ
+        const need = [...new Set(rows.map(r => norm(r.plan)).filter(n => n && !pm[n.toLowerCase()]))].slice(0, 20);
+        if (need.length) { await DB.batch(need.map(n => DB.prepare("INSERT INTO plans (name,active) VALUES (?,1)").bind(n.slice(0, 60)))); await loadPlans(); }
+      }
+      const vals = [], errors = [];
       for (const r of rows) {
-        const id = String(r.student_id || "").trim(), name = String(r.name || "").trim().slice(0, 80);
-        const cls = String(r.class || "").trim().slice(0, 20), pn = String(r.plan || "").trim();
-        if (!/^[A-Za-z0-9\-]{3,20}$/.test(id)) { errors.push("แถว " + r.line + ": รหัส \"" + id.slice(0, 20) + "\" ไม่ถูกต้อง"); continue; }
-        let pid = null;
-        if (pn) { pid = pm[pn.toLowerCase()]; if (!pid) { errors.push("แถว " + r.line + ": ไม่พบแผนการเรียน \"" + pn.slice(0, 40) + "\""); continue; } }
-        stmts.push(DB.prepare("INSERT INTO students (student_id,name,class,plan_id) VALUES (?,?,?,?) ON CONFLICT(student_id) DO UPDATE SET name=excluded.name,class=excluded.class,plan_id=excluded.plan_id").bind(id, name, cls, pid));
+        const where = (r.file ? norm(r.file).slice(0, 50) + " " : "") + "แถว " + r.line;
+        const id = norm(r.student_id);
+        if (!/^[A-Za-z0-9\-]{3,20}$/.test(id)) { errors.push(where + ": รหัส \"" + id.slice(0, 20) + "\" ไม่ถูกต้อง"); continue; }
+        const prefix = norm(r.prefix).slice(0, 20), first = norm(r.first).slice(0, 60), last = norm(r.last).slice(0, 60);
+        let name = (prefix + first + (last ? " " + last : "")).trim();
+        if (!name) name = norm(r.name).slice(0, 100);
+        const grade = norm(r.grade).slice(0, 10), room = norm(r.room).slice(0, 10);
+        const gl = /^\d+$/.test(grade) ? "ม." + grade : grade;
+        const cls = (gl && room ? gl + "/" + room : norm(r.class).slice(0, 20) || gl).slice(0, 20);
+        const pn = norm(r.plan); let pid = null;
+        if (pn) { pid = pm[pn.toLowerCase()]; if (!pid) { errors.push(where + ": ไม่พบสาย/แผนการเรียน \"" + pn.slice(0, 40) + "\""); continue; } }
+        const sq = norm(r.seq), seq = sq !== "" && Number.isFinite(Number(sq)) ? Math.trunc(Number(sq)) : null;
+        vals.push([id, name, cls, pid, prefix || null, first || null, last || null, grade || null, room || null, seq]);
+      }
+      const stmts = [];
+      for (let i = 0; i < vals.length; i += 9) {
+        const part = vals.slice(i, i + 9);
+        stmts.push(DB.prepare("INSERT INTO students (student_id,name,class,plan_id,prefix,first_name,last_name,grade,room,seq) VALUES " +
+          part.map(() => "(?,?,?,?,?,?,?,?,?,?)").join(",") +
+          " ON CONFLICT(student_id) DO UPDATE SET name=excluded.name,class=excluded.class,plan_id=excluded.plan_id,prefix=excluded.prefix,first_name=excluded.first_name,last_name=excluded.last_name,grade=excluded.grade,room=excluded.room,seq=excluded.seq").bind(...part.flat()));
       }
       if (stmts.length) await DB.batch(stmts);
-      return json({ ok: true, saved: stmts.length, errors: errors.slice(0, 50) });
+      return json({ ok: true, saved: vals.length, errors: errors.slice(0, 50) });
     }
     case "student_delete":
       await DB.prepare("DELETE FROM students WHERE student_id=?").bind(String(b.student_id || "")).run();

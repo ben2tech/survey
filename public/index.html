@@ -30,6 +30,7 @@ h1,h2,h3,button,.role,.chip{font-family:"Prompt","Noto Sans Thai","Leelawadee UI
 .hero .in{position:relative;z-index:1;max-width:640px;margin:0 auto}
 .logo{width:46px;height:46px;border-radius:15px;background:var(--ye);display:grid;place-items:center;font-size:1.45rem;margin-bottom:14px;box-shadow:0 4px 0 var(--ye-d)}
 .hero h1{margin:0 0 8px;font-size:clamp(1.45rem,5.4vw,2rem);line-height:1.3;font-weight:700;max-width:80%}
+.school{font-family:"Prompt","Noto Sans Thai",sans-serif;font-weight:500;font-size:.98rem;opacity:.92;margin:0 0 4px}
 .pill{display:inline-block;background:rgba(255,255,255,.16);border-radius:99px;padding:3px 14px;font-size:.88rem}
 
 .wrap{max-width:640px;margin:0 auto;padding:0 16px 48px}
@@ -99,8 +100,9 @@ button.go.sm{width:auto;padding:0 26px}
 <body>
 
 <header class="hero" id="hero"><div class="in">
-  <h1 id="ttl">แบบสอบถามความพึงพอใจ</h1>
-  <h1 id="sch">โรงเรียนเบญจมราชรังสฤษฎิ์ ๒</h1>
+  <div class="logo">🎓</div>
+  <div class="school" id="sch" style="display:none"></div>
+  <h1 id="ttl">แบบสอบถามความพึงพอใจในการเรียน</h1>
   <span class="pill" id="rnd" style="display:none"></span>
 </div></header>
 
@@ -173,6 +175,7 @@ const planName = id => (CFG.plans.find(p => p.id === id) || {}).name || "";
 
 fetch("/api/config").then(r => r.json()).then(c => {
   CFG = c;
+  if (c.school) { $("sch").textContent = c.school; $("sch").style.display = "block"; }
   $("ttl").textContent = c.title; document.title = c.title;
   if (c.round) { $("rnd").textContent = "รอบการประเมิน: " + c.round; $("rnd").style.display = "inline-block"; }
   if (c.consent_required) { $("cons").classList.remove("hide"); $("ctext").textContent = c.consent_text; }
@@ -190,7 +193,7 @@ async function search() {
   try {
     const j = await (await fetch("/api/lookup?id=" + encodeURIComponent(sid))).json();
     if (!j.found && j.required) return $("e1").textContent = "ไม่พบรหัสนี้ในระบบ กรุณาตรวจสอบรหัสหรือติดต่อครู";
-    S = { sid, name: j.found ? j.name : "", cls: j.found ? j.class : "", planId: j.found && planName(j.plan_id) ? j.plan_id : null, done: j.done || {} };
+    S = { sid, name: j.found ? j.name : "", cls: j.found ? j.class : "", planId: j.found && planName(j.plan_id) ? j.plan_id : null, no: j.found ? j.no : null, done: j.done || {} };
     if (S.planId) return openQ();
     $("mmsg").textContent = j.found ? "พบรหัสในระบบ แต่ยังไม่ได้กำหนดสาย กรุณาเลือกสายของคุณ" : "ไม่พบรหัสนี้ในรายชื่อ กรุณาเลือกสายของคุณเอง";
     $("manual").classList.remove("hide");
@@ -214,7 +217,7 @@ function openQ() {
   role = S.done.student && !S.done.parent ? "parent" : "student";
   $("wname").textContent = S.name || "รหัส " + S.sid;
   $("chips").innerHTML = "";
-  [["รหัส " + S.sid, ""], ...(S.cls ? [["ห้อง " + S.cls, ""]] : []), ["สาย " + planName(S.planId), "y"]].forEach(([t, c]) => {
+  [["รหัส " + S.sid, ""], ...(S.cls ? [["ห้อง " + S.cls, ""]] : []), ...(S.no ? [["เลขที่ " + S.no, ""]] : []), ["สาย " + planName(S.planId), "y"]].forEach(([t, c]) => {
     const e = document.createElement("span"); e.className = "chip " + c; e.textContent = t; $("chips").appendChild(e);
   });
   $("hero").classList.add("hide"); $("s1").classList.add("hide"); $("s2").classList.remove("hide"); scrollTo(0, 0);

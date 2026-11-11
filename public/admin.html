@@ -131,16 +131,21 @@ body{padding:0}
   </section>
 
   <section id="t-stu" class="hide">
-    <div class="card"><h2>นำเข้ารายชื่อนักเรียนจากไฟล์ CSV</h2>
-      <p class="mu">คอลัมน์: <b>รหัสนักเรียน, ชื่อ-สกุล, ห้อง, แผนการเรียน</b> · ชื่อแผนต้องตรงกับที่สร้างไว้ (เว้นว่างได้ = ให้นักเรียนเลือกเอง) · รหัสซ้ำจะถูกอัปเดตทับ · รองรับไฟล์ UTF-8 และ CSV จาก Excel ภาษาไทย</p>
+    <div class="card"><h2>นำเข้ารายชื่อนักเรียน (CSV หรือ Excel)</h2>
+      <p class="mu">ระบบอ่านจาก <b>หัวคอลัมน์ในแถวแรก</b> ไม่ต้องเรียงคอลัมน์ตามลำดับ: <b>รหัสนักเรียน, คำนำหน้า, ชื่อ, นามสกุล, สาย/แผนการเรียน, ชั้น, ห้อง, เลขที่</b>
+        · เลือกได้ <b>หลายไฟล์พร้อมกัน</b> · ไฟล์ .xlsx อ่านได้ทุกชีต (ถ้าชีตไม่มีคอลัมน์สาย จะใช้ชื่อชีตเป็นสาย) · รหัสซ้ำจะถูกอัปเดตทับ</p>
       <div class="bar"><label><input type="checkbox" id="screate" checked> สร้างสาย/แผนการเรียนใหม่อัตโนมัติ ถ้ายังไม่มีในระบบ</label></div>
-      <div class="bar"><input type="file" id="sfile" accept=".csv,.txt"><button class="sec" id="stpl">⬇️ ดาวน์โหลดไฟล์ตัวอย่าง</button></div>
+      <div class="bar"><input type="file" id="sfile" accept=".csv,.txt,.xlsx,.xls" multiple><button class="sec" id="stpl">⬇️ ดาวน์โหลดไฟล์ตัวอย่าง</button></div>
       <div id="sprev"></div></div>
     <div class="card"><h2>เพิ่มทีละคน</h2><div class="bar">
-      <input id="s-id" placeholder="รหัส" style="width:110px" maxlength="20"><input id="s-nm" placeholder="ชื่อ-สกุล" maxlength="80"><input id="s-cl" placeholder="ห้อง" style="width:90px" maxlength="20"><select id="s-pl"></select><button id="s-add">บันทึก</button></div>
+      <input id="s-id" placeholder="รหัส" style="width:100px" maxlength="20"><input id="s-pre" placeholder="คำนำหน้า" style="width:100px" maxlength="20">
+      <input id="s-fn" placeholder="ชื่อ" style="width:130px" maxlength="60"><input id="s-ln" placeholder="นามสกุล" style="width:130px" maxlength="60">
+      <input id="s-gr" placeholder="ชั้น" style="width:60px" maxlength="10"><input id="s-rm" placeholder="ห้อง" style="width:60px" maxlength="10"><input id="s-no" placeholder="เลขที่" style="width:70px" maxlength="4">
+      <select id="s-pl"></select><button id="s-add">บันทึก</button></div>
       <div class="err" id="s-e"></div></div>
     <div class="card"><div class="bar"><input id="s-q" placeholder="ค้นหารหัส/ชื่อ/ห้อง">
-      <select id="s-f"><option value="">ทั้งหมด</option><option value="ns">ยังไม่ตอบ (นักเรียน)</option><option value="np">ยังไม่ตอบ (ผู้ปกครอง)</option></select>
+      <select id="s-fp"></select><select id="s-fc"></select>
+      <select id="s-f"><option value="">ทุกสถานะ</option><option value="ns">ยังไม่ตอบ (นักเรียน)</option><option value="np">ยังไม่ตอบ (ผู้ปกครอง)</option></select>
       <button class="sec" id="s-csv">⬇️ ส่งออกรายการนี้</button><button class="del" id="s-clr">ล้างรายชื่อทั้งหมด</button></div>
       <div class="wide" id="sl"></div></div>
   </section>
@@ -154,6 +159,7 @@ body{padding:0}
     <div class="card"><h2>ตั้งค่าระบบ</h2>
       <div class="bar"><label><input type="checkbox" id="sopen"> เปิดรับแบบสอบถาม</label></div>
       <div class="bar"><label><input type="checkbox" id="sreq"> รับเฉพาะรหัสนักเรียนที่อยู่ในรายชื่อ (และล็อกแผนตามรายชื่อ)</label></div>
+      <div class="bar"><input id="sschool" placeholder="ชื่อโรงเรียน (แสดงเหนือชื่อแบบสอบถาม)" maxlength="120" style="flex:1;min-width:240px"></div>
       <div class="bar"><input id="stitle" placeholder="ชื่อแบบสอบถาม" maxlength="120" style="flex:1;min-width:240px"><button id="ssave">บันทึก</button></div>
       <h2 style="margin-top:20px">ประกาศความเป็นส่วนตัว (PDPA)</h2>
       <div class="bar"><label><input type="checkbox" id="scon"> ต้องกดยินยอมก่อนทำแบบสอบถาม</label></div>
@@ -294,9 +300,9 @@ $("#csv").onclick = async () => {
 };
 
 /* ---------- ตั้งค่า ---------- */
-async function loadSet() { const s = await api("settings"); $("#sopen").checked = s.survey_open !== "0"; $("#stitle").value = s.title || ""; $("#sreq").checked = s.require_roster === "1"; $("#scon").checked = s.consent_required !== "0"; $("#sctext").value = s.consent_text || ""; }
+async function loadSet() { const s = await api("settings"); $("#sopen").checked = s.survey_open !== "0"; $("#stitle").value = s.title || ""; $("#sschool").value = s.school_name || ""; $("#sreq").checked = s.require_roster === "1"; $("#scon").checked = s.consent_required !== "0"; $("#sctext").value = s.consent_text || ""; }
 $("#sopen").onchange = async e => { await post({action: "setting_save", key: "survey_open", value: e.target.checked ? "1" : "0"}); $("#sm").textContent = "บันทึกแล้ว"; };
-$("#ssave").onclick = async () => { await post({action: "setting_save", key: "title", value: $("#stitle").value}); $("#sm").textContent = "บันทึกแล้ว"; };
+$("#ssave").onclick = async () => { await post({action: "setting_save", key: "title", value: $("#stitle").value}); await post({action: "setting_save", key: "school_name", value: $("#sschool").value}); $("#sm").textContent = "บันทึกแล้ว"; };
 
 /* ---------- รายชื่อนักเรียน ---------- */
 let STU = [], IMP = [];
@@ -315,57 +321,119 @@ function parseCSV(t) {
   if (f !== "" || r.length) { r.push(f); rows.push(r); }
   return rows.filter(x => x.some(v => v.trim() !== ""));
 }
-$("#stpl").onclick = () => dl("students-template.csv", ["รหัสนักเรียน,ชื่อ-สกุล,ห้อง,สาย/แผนการเรียน",
-  [12345, "สมชาย ใจดี", "ม.4/1", PLANS[0] ? PLANS[0].name : "วิทย์-คณิต"].map(csvc).join(","),
-  [12346, "สมหญิง รักเรียน", "ม.4/2", PLANS[1] ? PLANS[1].name : "ศิลป์-ภาษา"].map(csvc).join(",")].join("\n") + "\n");
+/* ชื่อหัวคอลัมน์ที่รู้จัก (ตัดช่องว่างและตัวพิมพ์เล็ก/ใหญ่ก่อนเทียบ) */
+const FIELDS = {
+  student_id: ["รหัสนักเรียน", "รหัส", "เลขประจำตัว", "เลขประจำตัวนักเรียน", "studentid", "id"],
+  prefix: ["คำนำหน้า", "คำนำหน้าชื่อ", "prefix", "title"],
+  first: ["ชื่อ", "ชื่อจริง", "firstname", "first"],
+  last: ["นามสกุล", "สกุล", "lastname", "last"],
+  name: ["ชื่อ-สกุล", "ชื่อสกุล", "ชื่อ-นามสกุล", "ชื่อนามสกุล", "fullname", "name"],
+  plan: ["สาย/แผนการเรียน", "สาย", "แผนการเรียน", "แผน", "สายการเรียน", "plan"],
+  grade: ["ชั้น", "ระดับชั้น", "grade"],
+  room: ["ห้อง", "room"],
+  seq: ["เลขที่", "เลขที่ในห้อง", "no", "number"],
+  class: ["ห้องเรียน", "class"],
+};
+const hn = v => String(v ?? "").replace(/[\s\u200b]/g, "").toLowerCase();
+function toRecords(rows, planFallback, label) {
+  if (!rows.length) return {recs: [], note: "ไม่มีข้อมูล"};
+  const map = {};
+  rows[0].forEach((h, i) => { const k = hn(h); for (const [f, names] of Object.entries(FIELDS)) if (!(f in map) && names.some(n => hn(n) === k)) { map[f] = i; break; } });
+  if (!("student_id" in map)) return {recs: [], note: "ข้าม: ไม่พบคอลัมน์ \"รหัสนักเรียน\" ในแถวแรก"};
+  if ("room" in map && !("grade" in map)) { map.class = map.room; delete map.room; }   // รูปแบบเก่า: ห้อง = "ม.4/1"
+  const g = (r, f) => f in map ? String(r[map[f]] ?? "").trim() : "";
+  const recs = rows.slice(1).map((r, i) => ({line: i + 2, file: label, student_id: g(r, "student_id"), prefix: g(r, "prefix"), first: g(r, "first"), last: g(r, "last"),
+    name: g(r, "name"), plan: "plan" in map ? g(r, "plan") : (planFallback || ""), grade: g(r, "grade"), room: g(r, "room"), seq: g(r, "seq"), class: g(r, "class")}))
+    .filter(x => x.student_id || x.first || x.name);
+  return {recs, note: ""};
+}
+function loadXLSX() {
+  return window.XLSX ? Promise.resolve() : new Promise((ok, bad) => {
+    const s = document.createElement("script"); s.src = "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js";
+    s.onload = ok; s.onerror = () => bad(new Error("โหลดตัวอ่าน Excel ไม่ได้ ลองบันทึกแต่ละชีตเป็น CSV แทน")); document.head.appendChild(s);
+  });
+}
+$("#stpl").onclick = () => dl("students-template.csv", ["รหัสนักเรียน,คำนำหน้า,ชื่อ,นามสกุล,สาย/แผนการเรียน,ชั้น,ห้อง,เลขที่",
+  [19832, "เด็กชาย", "สมชาย", "ใจดี", PLANS[0] ? PLANS[0].name : "CLIP", 1, 11, 1].map(csvc).join(","),
+  [19833, "เด็กหญิง", "สมหญิง", "รักเรียน", PLANS[1] ? PLANS[1].name : "EIS", 1, 11, 2].map(csvc).join(",")].join("\n") + "\n");
 $("#sfile").onchange = async e => {
-  const f = e.target.files[0]; if (!f) return;
-  const buf = await f.arrayBuffer(); let txt;
-  try { txt = new TextDecoder("utf-8", {fatal: true}).decode(buf); } catch { txt = new TextDecoder("windows-874").decode(buf); }
-  const rows = parseCSV(txt);
-  const start = rows.length && /รหัส|id/i.test(rows[0][0] || "") ? 1 : 0;
-  IMP = rows.slice(start).map((r, i) => ({line: i + start + 1, student_id: (r[0] || "").trim(), name: (r[1] || "").trim(), class: (r[2] || "").trim(), plan: (r[3] || "").trim()}));
-  $("#sprev").innerHTML = `<p>พบ <b>${IMP.length}</b> แถว (ตัวอย่าง 5 แถวแรก)</p><div class="wide"><table><tr><th>รหัส</th><th>ชื่อ-สกุล</th><th>ห้อง</th><th>แผน</th></tr>` +
-    IMP.slice(0, 5).map(r => `<tr><td>${esc(r.student_id)}</td><td>${esc(r.name)}</td><td>${esc(r.class)}</td><td>${esc(r.plan)}</td></tr>`).join("") +
-    `</table></div><div class="bar" style="margin-top:10px"><button id="sgo" ${IMP.length ? "" : "disabled"}>นำเข้า ${IMP.length} รายการ</button></div><div id="sres"></div>`;
+  const files = [...e.target.files]; if (!files.length) return;
+  IMP = []; const notes = [];
+  for (const f of files) {
+    try {
+      if (/\.xlsx?$/i.test(f.name)) {
+        await loadXLSX();
+        const wb = XLSX.read(await f.arrayBuffer(), {type: "array"});
+        for (const sn of wb.SheetNames) {
+          const rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], {header: 1, raw: false, defval: ""}).filter(r => r.some(v => String(v).trim() !== ""));
+          const r = toRecords(rows, sn, f.name + " ชีต " + sn); IMP.push(...r.recs);
+          notes.push(`${f.name} › ชีต "${sn}": ${r.recs.length} แถว ${r.note}`);
+        }
+      } else {
+        const buf = await f.arrayBuffer(); let txt;
+        try { txt = new TextDecoder("utf-8", {fatal: true}).decode(buf); } catch { txt = new TextDecoder("windows-874").decode(buf); }
+        const r = toRecords(parseCSV(txt), "", f.name); IMP.push(...r.recs); notes.push(`${f.name}: ${r.recs.length} แถว ${r.note}`);
+      }
+    } catch (err) { notes.push(`${f.name}: อ่านไฟล์ไม่ได้ (${err.message})`); }
+  }
+  const byPlan = {}; IMP.forEach(r => { const k = r.plan || "(ไม่ระบุสาย)"; byPlan[k] = (byPlan[k] || 0) + 1; });
+  const full = r => (r.prefix + r.first + (r.last ? " " + r.last : "")).trim() || r.name;
+  const cls = r => r.grade && r.room ? `ม.${r.grade}/${r.room}` : (r.class || r.grade);
+  $("#sprev").innerHTML = `<ul class="mu">${notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>
+    <p>รวม <b>${IMP.length}</b> แถว — ` + Object.entries(byPlan).map(([k, v]) => `${esc(k)} <b>${v}</b>`).join(" · ") + `</p>
+    <div class="wide"><table><tr><th>รหัส</th><th>ชื่อ-สกุล</th><th>ชั้น/ห้อง</th><th>เลขที่</th><th>สาย</th></tr>` +
+    IMP.slice(0, 5).map(r => `<tr><td>${esc(r.student_id)}</td><td>${esc(full(r))}</td><td>${esc(cls(r))}</td><td>${esc(r.seq)}</td><td>${esc(r.plan)}</td></tr>`).join("") +
+    `</table></div><p class="mu">แสดงตัวอย่าง 5 แถวแรก ตรวจชื่อสายให้ถูกต้องก่อนกดนำเข้า</p>
+    <div class="bar"><button id="sgo" ${IMP.length ? "" : "disabled"}>นำเข้า ${IMP.length} รายการ</button></div><div id="sres"></div>`;
   $("#sgo").onclick = doImport;
 };
 async function doImport() {
-  $("#sgo").disabled = true; $("#sgo").textContent = "กำลังนำเข้า..."; let saved = 0; const errs = [];
-  for (let i = 0; i < IMP.length; i += 200) {
-    try { const j = await post({action: "students_import", create_plans: $("#screate").checked, rows: IMP.slice(i, i + 200)}); saved += j.saved; errs.push(...j.errors); }
+  $("#sgo").disabled = true; let saved = 0; const errs = [];
+  for (let i = 0; i < IMP.length; i += 100) {
+    $("#sgo").textContent = `กำลังนำเข้า ${Math.min(i + 100, IMP.length)}/${IMP.length}...`;
+    try { const j = await post({action: "students_import", create_plans: $("#screate").checked, rows: IMP.slice(i, i + 100)}); saved += j.saved; errs.push(...j.errors); }
     catch (e) { errs.push("ผิดพลาด: " + e.message); break; }
   }
   $("#sgo").textContent = "เสร็จสิ้น";
   $("#sres").innerHTML = `<p style="color:var(--ok)">✅ บันทึกสำเร็จ ${saved} รายการ</p>` +
-    (errs.length ? `<p class="err">ข้ามรายการที่มีปัญหา:</p><ul>${errs.slice(0, 60).map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "");
-  loadStu();
+    (errs.length ? `<p class="err">ข้ามรายการที่มีปัญหา ${errs.length} รายการ:</p><ul>${errs.slice(0, 60).map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "");
+  loadPlans(); loadStu();
 }
-async function loadStu() { STU = (await api("students", {round: $("#rid").value})).students; renderStu(); }
+const cmpTh = (a, b) => String(a).localeCompare(String(b), "th", {numeric: true});
+async function loadStu() {
+  STU = (await api("students", {round: $("#rid").value})).students;
+  const keep = [$("#s-fp").value, $("#s-fc").value];
+  $("#s-fp").innerHTML = '<option value="">ทุกสาย</option>' + PLANS.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("");
+  $("#s-fc").innerHTML = '<option value="">ทุกห้อง</option>' + [...new Set(STU.map(s => s.class).filter(Boolean))].sort(cmpTh).map(c => `<option>${esc(c)}</option>`).join("");
+  $("#s-fp").value = keep[0]; $("#s-fc").value = keep[1];
+  renderStu();
+}
 function stuFiltered() {
-  const q = $("#s-q").value.trim().toLowerCase(), f = $("#s-f").value;
-  return STU.filter(s => (!q || [s.student_id, s.name, s.class].join(" ").toLowerCase().includes(q)) && (f !== "ns" || !s.sd) && (f !== "np" || !s.pd));
+  const q = $("#s-q").value.trim().toLowerCase(), f = $("#s-f").value, fp = $("#s-fp").value, fc = $("#s-fc").value;
+  return STU.filter(s => (!q || [s.student_id, s.name, s.class].join(" ").toLowerCase().includes(q)) && (!fp || String(s.plan_id) === fp) && (!fc || s.class === fc)
+    && (f !== "ns" || !s.sd) && (f !== "np" || !s.pd));
 }
 function renderStu() {
   const L = stuFiltered(), ok = v => v ? "✅" : "—";
   $("#sl").innerHTML = `<p class="mu">ทั้งหมด ${STU.length} คน · ตรงเงื่อนไข ${L.length} คน (แสดงสูงสุด 300)</p>` + (L.length ?
-    `<table><tr><th>รหัส</th><th>ชื่อ-สกุล</th><th>ห้อง</th><th>แผน</th><th>นักเรียนตอบ</th><th>ผู้ปกครองตอบ</th><th></th></tr>` +
-    L.slice(0, 300).map(s => `<tr><td>${esc(s.student_id)}</td><td>${esc(s.name)}</td><td>${esc(s.class)}</td><td>${esc(s.plan_name || "—")}</td><td>${ok(s.sd)}</td><td>${ok(s.pd)}</td>
+    `<table><tr><th>รหัส</th><th>ชื่อ-สกุล</th><th>ชั้น/ห้อง</th><th>เลขที่</th><th>สาย</th><th>นักเรียนตอบ</th><th>ผู้ปกครองตอบ</th><th></th></tr>` +
+    L.slice(0, 300).map(s => `<tr><td>${esc(s.student_id)}</td><td>${esc(s.name)}</td><td>${esc(s.class)}</td><td>${esc(s.seq)}</td><td>${esc(s.plan_name || "—")}</td><td>${ok(s.sd)}</td><td>${ok(s.pd)}</td>
     <td><button class="sm del" onclick="delStu('${esc(s.student_id)}')">ลบ</button></td></tr>`).join("") + `</table>` : "");
 }
-$("#s-q").oninput = renderStu; $("#s-f").onchange = renderStu;
+$("#s-q").oninput = renderStu; $("#s-f").onchange = renderStu; $("#s-fp").onchange = renderStu; $("#s-fc").onchange = renderStu;
 window.delStu = async id => { if (confirm("ลบนักเรียนรหัส " + id + " ออกจากรายชื่อ?")) { await post({action: "student_delete", student_id: id}); loadStu(); } };
 $("#s-clr").onclick = async () => { if (confirm("ล้างรายชื่อนักเรียนทั้งหมด? (ผลการตอบไม่ถูกลบ)")) { await post({action: "students_clear"}); loadStu(); } };
 $("#s-add").onclick = async () => {
   const p = PLANS.find(x => String(x.id) === $("#s-pl").value);
   try {
-    const j = await post({action: "students_import", rows: [{line: 1, student_id: $("#s-id").value, name: $("#s-nm").value, class: $("#s-cl").value, plan: p ? p.name : ""}]});
+    const j = await post({action: "students_import", rows: [{line: 1, student_id: $("#s-id").value, prefix: $("#s-pre").value, first: $("#s-fn").value, last: $("#s-ln").value,
+      grade: $("#s-gr").value, room: $("#s-rm").value, seq: $("#s-no").value, plan: p ? p.name : ""}]});
     if (j.errors.length) throw new Error(j.errors[0]);
-    $("#s-e").textContent = ""; $("#s-id").value = $("#s-nm").value = ""; loadStu();
+    $("#s-e").textContent = ""; ["#s-id", "#s-fn", "#s-ln", "#s-no"].forEach(x => $(x).value = ""); loadStu();
   } catch (e) { $("#s-e").textContent = e.message; }
 };
-$("#s-csv").onclick = () => dl("students.csv", [["รหัสนักเรียน", "ชื่อ-สกุล", "ห้อง", "แผนการเรียน", "นักเรียนตอบ", "ผู้ปกครองตอบ"].map(csvc).join(","),
-  ...stuFiltered().map(s => [s.student_id, s.name, s.class, s.plan_name || "", s.sd ? "ตอบแล้ว" : "ยังไม่ตอบ", s.pd ? "ตอบแล้ว" : "ยังไม่ตอบ"].map(csvc).join(","))].join("\n"));
+$("#s-csv").onclick = () => dl("students.csv", [["รหัสนักเรียน", "คำนำหน้า", "ชื่อ", "นามสกุล", "สาย/แผนการเรียน", "ชั้น", "ห้อง", "เลขที่", "นักเรียนตอบ", "ผู้ปกครองตอบ"].map(csvc).join(","),
+  ...stuFiltered().map(s => [s.student_id, s.prefix, s.first_name || (s.prefix ? "" : s.name), s.last_name, s.plan_name || "", s.grade, s.room, s.seq, s.sd ? "ตอบแล้ว" : "ยังไม่ตอบ", s.pd ? "ตอบแล้ว" : "ยังไม่ตอบ"].map(csvc).join(","))].join("\n"));
 $("#sreq").onchange = async e => { await post({action: "setting_save", key: "require_roster", value: e.target.checked ? "1" : "0"}); $("#sm").textContent = "บันทึกแล้ว"; };
 
 /* ---------- รอบการประเมิน / ด้าน / ประกาศ / พิมพ์ ---------- */

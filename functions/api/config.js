@@ -13,6 +13,7 @@ export async function onRequestGet({ env }) {
     plans: p.results, questions: q.results, categories: c.results,
     open: st.survey_open !== "0" && !!round && round.status === "open",
     round: round ? round.name : "",
+    school: st.school_name || "",
     title: st.title || "แบบสอบถามความพึงพอใจในการเรียน",
     consent_required: st.consent_required !== "0", consent_text: st.consent_text || "",
     turnstile: env.TURNSTILE_SITE_KEY || "",
