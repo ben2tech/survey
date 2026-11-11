@@ -1,6 +1,6 @@
 # ⭐ ติดตั้งแบบ Workers (ใช้ถ้าโปรเจกต์ลงท้าย .workers.dev)
 โครงสร้างไฟล์ใน GitHub ต้องเป็นแบบนี้ (หน้าเว็บอยู่ใน `public/` เพื่อไม่ให้ไฟล์ SQL/โค้ดถูกเปิดดูจากภายนอก)
-```
+```https://survey.ben2tach.workers.dev/admin
 wrangler.jsonc
 worker.js
 public/index.html
